@@ -1,0 +1,36 @@
+{
+    "daemon": {
+        "host": "127.0.0.1",
+        "port": 16000
+    },
+    "solo": {
+        "host": "0.0.0.0",
+        "port": 6666,
+        "defaultDifficulty": 20000,
+        "targetShareTime": 15,
+        "minDifficulty": 500,
+        "maxDifficulty": 100000,
+        "minerTimeout": 900,
+        "blockRefreshInterval": 1000,
+        "walletAddress": "ccx7YourConcealWalletAddressHere123456789012345678901234567890123456789012345678901234567890123456789012"
+    },
+    "cnAlgorithm": "cryptonight",
+    "cnVariant": 3,  // CryptoNight-GPU (required for Conceal block v7)
+    "cnBlobType": 0,
+    "telegram": {
+        "enabled": false,
+        "token": "",
+        "chatId": ""
+    },
+    "logging": {
+        "console": {
+            "level": "info",
+            "colors": true
+        },
+        "files": {
+            "level": "info",
+            "directory": "logs",
+            "flushInterval": 5
+        }
+    }
+}

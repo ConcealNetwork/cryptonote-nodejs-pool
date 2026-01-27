@@ -20,7 +20,37 @@ require('./lib/logger.js');
 var redis = require('redis');
 
 var redisDB = (config.redis.db && config.redis.db > 0) ? config.redis.db : 0;
-global.redisClient = redis.createClient(config.redis.port, config.redis.host, { db: redisDB, auth_pass: config.redis.auth });
+// Redis v4+ uses new API format, but maintains callback support
+var redisOptions = {
+    socket: {
+        host: config.redis.host,
+        port: config.redis.port
+    },
+    database: redisDB
+};
+if (config.redis.auth) {
+    redisOptions.password = config.redis.auth;
+}
+
+global.redisClient = redis.createClient(redisOptions);
+
+// Connect to Redis and handle errors
+global.redisClient.on('error', function(err) {
+    if (typeof log === 'function') {
+        log('error', 'redis', 'Redis client error: %s', [err]);
+    } else {
+        console.error('Redis client error:', err);
+    }
+});
+
+// Connect asynchronously - Redis v4 requires explicit connection
+global.redisClient.connect().catch(function(err) {
+    if (typeof log === 'function') {
+        log('error', 'redis', 'Failed to connect to Redis: %s', [err]);
+    } else {
+        console.error('Failed to connect to Redis:', err);
+    }
+});
 
 // Load pool modules
 if (cluster.isWorker){
@@ -114,34 +144,45 @@ var singleModule = (function(){
  * Check redis database version
  **/
 function checkRedisVersion(callback){
-    redisClient.info(function(error, response){
-        if (error){
-            log('error', logSystem, 'Redis version check failed');
-            return;
-        }
-        var parts = response.split('\r\n');
-        var version;
-        var versionString;
-        for (var i = 0; i < parts.length; i++){
-            if (parts[i].indexOf(':') !== -1){
-                var valParts = parts[i].split(':');
-                if (valParts[0] === 'redis_version'){
-                    versionString = valParts[1];
-                    version = parseFloat(versionString);
-                    break;
+    // Redis v4+ requires connection first, then we can use callbacks
+    function doCheck() {
+        // Redis v4 info() returns a promise, convert to callback
+        global.redisClient.info().then(function(response){
+            var parts = response.split('\r\n');
+            var version;
+            var versionString;
+            for (var i = 0; i < parts.length; i++){
+                if (parts[i].indexOf(':') !== -1){
+                    var valParts = parts[i].split(':');
+                    if (valParts[0] === 'redis_version'){
+                        versionString = valParts[1];
+                        version = parseFloat(versionString);
+                        break;
+                    }
                 }
             }
-        }
-        if (!version){
-            log('error', logSystem, 'Could not detect redis version - must be super old or broken');
-            return;
-        }
-        else if (version < 2.6){
-            log('error', logSystem, "You're using redis version %s the minimum required version is 2.6. Follow the damn usage instructions...", [versionString]);
-            return;
-        }
-        callback();
-    });
+            if (!version){
+                log('error', logSystem, 'Could not detect redis version - must be super old or broken');
+                return;
+            }
+            else if (version < 2.6){
+                log('error', logSystem, "You're using redis version %s the minimum required version is 2.6. Follow the damn usage instructions...", [versionString]);
+                return;
+            }
+            callback();
+        }).catch(function(error){
+            log('error', logSystem, 'Redis version check failed: %s', [error]);
+        });
+    }
+    
+    // Ensure client is connected
+    if (global.redisClient.isOpen) {
+        doCheck();
+    } else {
+        global.redisClient.connect().then(doCheck).catch(function(err) {
+            log('error', logSystem, 'Failed to connect to Redis for version check: %s', [err]);
+        });
+    }
 }
 
 /**

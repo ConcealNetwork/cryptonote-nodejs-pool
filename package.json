@@ -1,29 +1,48 @@
 {
     "name": "cryptonote-nodejs-pool",
-    "version": "1.3.5",
+    "version": "1.4.0",
     "license": "GPL-2.0",
     "author": "Daniel Vandal",
     "repository": {
         "type": "git",
         "url": "https://github.com/dvandal/cryptonote-nodejs-pool.git"
     },
+    "scripts": {
+        "lint": "biome lint .",
+        "lint:fix": "biome lint --write .",
+        "format": "biome format .",
+        "format:fix": "biome format --write ."
+    },
     "dependencies": {
-        "async": "^1.5.2",
-        "base58-native": "^0.1.4",
-        "bignum": "^0.13.0",
-        "cli-color": "^1.2.0",
-        "cryptoforknote-util": "git://github.com/MoneroOcean/node-cryptoforknote-util.git",
-        "cryptonight-hashing": "git://github.com/ConcealNetwork/node-cryptonight-hashing.git",
-        "dateformat": "^3.0.3",
-        "mailgun.js": "^2.0.1",
-        "node-telegram-bot-api": "^0.30.0",
-        "nodemailer": "^2.7.2",
+        "async": "^3.2.5",
+        "bn.js": "^5.2.2",
+        "bufferutil": "^4.0.8",
+        "cli-color": "^2.0.3",
+        "cryptoforknote-util": "git+https://github.com/MoneroOcean/node-cryptoforknote-util.git",
+        "cryptonight-hashing": "git+https://github.com/Acktarius/cryptonight-hashing.git",
+        "dateformat": "^4.6.3",
+        "mailgun.js": "^11.1.0",
+        "telegraf": "^4.16.3",
+        "nodemailer": "^7.0.12",
         "nodemailer-sendmail-transport": "^1.0.2",
-        "redis": "^2.8.0",
-        "socket.io": "^2.1.1",
-        "time-ago": "^0.2.1"
+        "redis": "^4.6.13",
+        "socket.io": "^4.8.3",
+        "time-ago": "^0.2.1",
+        "utf-8-validate": "^6.0.3"
     },
     "engines": {
-        "node": ">=4.0"
+        "node": ">=18.0.0"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "^2.3.12"
+    },
+    "overrides": {
+        "bignum": "^0.13.1",
+        "cookie": "^1.1.1",
+        "form-data": "^4.0.5",
+        "qs": "^6.14.1",
+        "tough-cookie": "^4.1.3",
+        "ws": "^8.19.0",
+        "socket.io-parser": "^4.2.5"
     }
 }

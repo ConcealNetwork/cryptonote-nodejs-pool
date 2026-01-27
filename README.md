@@ -13,6 +13,7 @@ High performance Node.js (with native C addons) mining pool for CryptoNote based
   * [Downloading & Installing](#1-downloading--installing)
   * [Configuration](#2-configuration)
   * [Starting the Pool](#3-start-the-pool)
+  * [Solo Mining Bridge](#solo-mining-bridge)
   * [Host the front-end](#4-host-the-front-end)
   * [Customizing your website](#5-customize-your-website)
   * [SSL](#ssl)
@@ -114,11 +115,11 @@ Usage
 #### Requirements
 * Coin daemon(s) (find the coin's repo and build latest version from source)
   * [List of Cryptonote coins](https://github.com/dvandal/cryptonote-nodejs-pool/wiki/Cryptonote-Coins)
-* [Node.js](http://nodejs.org/) v4.0+
+* [Node.js](http://nodejs.org/) v18.0+ (updated for modern dependencies)
   * For Ubuntu: 
  ```
-  curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash
-  sudo apt-get install -y nodejs
+ curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash
+ sudo apt-get install -y nodejs
 ```
 * [Redis](http://redis.io/) key-value store v2.6+ 
   * For Ubuntu: 
@@ -132,6 +133,9 @@ sudo apt-get install redis-server
 
 * Boost is required for the cryptoforknote-util module
   * For Ubuntu: `sudo apt-get install libboost-all-dev`
+
+* libsodium is required for the cryptoforknote-util module
+  * For Ubuntu: `sudo apt-get install libsodium-dev`
 
 
 ##### Seriously
@@ -152,14 +156,20 @@ sudo su - your-user
 #### 1) Downloading & Installing
 
 
-Clone the repository and run `npm update` for all the dependencies to be installed:
+Clone the repository and run `npm install` for all the dependencies to be installed. The postinstall script will automatically patch `bigint-buffer` with a safe implementation:
 
 ```bash
 git clone https://github.com/dvandal/cryptonote-nodejs-pool.git pool
 cd pool
 
-npm update
+npm install
 ```
+
+**Note on Security**: This pool uses a pure JavaScript Base58 implementation (`lib/safe-base58.js`) that eliminates the need for `base58-native` and its `bignum` dependency. The implementation uses native `BigInt` with proper bounds checking and has zero native dependencies.
+
+**Note on Remaining Vulnerabilities**: `npm audit` may still report vulnerabilities in `bigint-buffer` and `bignum`:
+- **`bigint-buffer`**: Automatically patched during installation with a safe native BigInt implementation (see `patches/` directory). The patch eliminates the buffer overflow vulnerability. This is required transitively by `cryptonight-hashing`.
+- **`bignum`**: Required transitively by native modules (`cryptoforknote-util`). All versions are affected, but we use the latest version (0.13.1) and it's only used internally by native C++ addons with controlled inputs for block processing operations.
 
 #### 2) Configuration
 
@@ -190,11 +200,15 @@ Explanation for each field:
 
 /* Set Cryptonight algorithm settings.
    Supported algorithms: cryptonight (default). cryptonight_light and cryptonight_heavy
-   Supported variants for "cryptonight": 0 (Original), 1 (Monero v7), 3 (Stellite / XTL)
+   Supported variants for "cryptonight": 
+     0 (Original), 
+     1 (Monero v7), 
+     3 (CryptoNight-GPU / Stellite / XTL / Conceal block v7)
    Supported variants for "cryptonight_light": 0 (Original), 1 (Aeon v7), 2 (IPBC)
-   Supported blob types: 0 (Cryptonote), 1 (Forknote v1), 2 (Forknote v2), 3 (Cryptonote v2 / Masari) */
+   Supported blob types: 0 (Cryptonote), 1 (Forknote v1), 2 (Forknote v2), 3 (Cryptonote v2 / Masari)
+   Note: For Conceal coin, use variant 3 (CryptoNight-GPU) for block v7 */
 "cnAlgorithm": "cryptonight",
-"cnVariant": 1,
+"cnVariant": 3,
 "cnBlobType": 0,
 
 /* Logging */
@@ -718,7 +732,7 @@ When updating to the latest code its important to not only `git pull` the latest
 the Node.js modules, and any config files that may have been changed.
 * Inside your pool directory (where the init.js script is) do `git pull` to get the latest code.
 * Remove the dependencies by deleting the `node_modules` directory with `rm -r node_modules`.
-* Run `npm update` to force updating/reinstalling of the dependencies.
+* Run `npm install` to reinstall all dependencies. The postinstall script will automatically patch `bigint-buffer` with a secure implementation.
 * Compare your `config.json` to the latest example ones in this repo or the ones in the setup instructions where each config field is explained. You may need to modify or add any new changes.
 
 ### JSON-RPC Commands from CLI
@@ -740,6 +754,135 @@ curl 127.0.0.1:18081/json_rpc -d '{"method":"getblockheaderbyheight","params":{"
 * To inspect and make changes to redis I suggest using [redis-commander](https://github.com/joeferner/redis-commander)
 * To monitor server load for CPU, Network, IO, etc - I suggest using [Netdata](https://github.com/firehol/netdata)
 * To keep your pool node script running in background, logging to file, and automatically restarting if it crashes - I suggest using [forever](https://github.com/nodejitsu/forever) or [PM2](https://github.com/Unitech/pm2)
+
+---
+
+#### Solo Mining Bridge
+
+The pool software includes a **solo mining bridge** mode that allows you to mine directly to your local daemon without running a full pool. This is perfect for home miners who want to solo mine with their GPU using miners like srbminer or xmr-stak.
+
+**Features:**
+- Minimal stratum server - no Redis, no payments, no API
+- Direct connection to your local daemon
+- Automatic block submission when blocks are found
+- Supports all Cryptonote algorithms and variants
+
+**Setup:**
+
+1. Copy the example configuration:
+```bash
+cp config-solo.json.example config-solo.json
+```
+
+2. Edit `config-solo.json` with your settings:
+```json
+{
+    "daemon": {
+        "host": "127.0.0.1",
+        "port": 18081
+    },
+    "solo": {
+        "host": "127.0.0.1",
+        "port": 3333,
+        "defaultDifficulty": 1000,
+        "minDifficulty": 500,
+        "maxDifficulty": 100000,
+        "minerTimeout": 900,
+        "blockRefreshInterval": 1000,
+        "walletAddress": "YOUR_WALLET_ADDRESS_HERE"
+    },
+    "cnAlgorithm": "cryptonight",
+    "cnVariant": 3,
+    "cnBlobType": 0
+}
+```
+
+3. Start the solo bridge:
+```bash
+node index.js --at-home-solo
+```
+
+4. Connect your miner to `stratum+tcp://127.0.0.1:3333` (or whatever port you configured)
+
+**Health Check:**
+
+You can run a one-off health check to verify your daemon connection and see the current block template:
+
+```bash
+node index.js --at-home-solo --health
+```
+
+This will:
+- Connect to your daemon
+- Fetch the current block template
+- Display status (height, difficulty, target) and header information
+- Exit with code 0 on success, 1 on error
+
+Example output:
+```json
+{
+  "status": {
+    "ok": true,
+    "daemonConnected": true,
+    "height": 123456,
+    "networkDifficulty": 987654321,
+    "shareDifficulty": 1000,
+    "minDifficulty": 500,
+    "maxDifficulty": 100000,
+    "defaultDifficulty": 1000,
+    "target": "00ffff...",
+    "algorithm": "cryptonight",
+    "variant": 3,
+    "blobType": 0
+  },
+  "header": {
+    "blob": "0afebabe...",
+    "height": 123456,
+    "difficulty": 987654321,
+    "target": "00ffff...",
+    "previous_hash": "abcd..."
+  }
+}
+```
+
+**Difficulty Configuration:**
+
+The solo bridge supports flexible difficulty settings:
+- **`defaultDifficulty`** (default: 1000): Default share difficulty for miners
+- **`minDifficulty`** (default: 500): Minimum allowed share difficulty
+- **`maxDifficulty`** (default: 100000): Maximum allowed share difficulty
+
+Miners can specify a custom difficulty in their login by appending `+difficulty` to their address (e.g., `address+2000`). The difficulty will be clamped to the min/max range.
+
+**Important:** The bridge always respects the **network difficulty** from the daemon for block validation. Shares must meet the network difficulty to be submitted as blocks. The share difficulty only controls what shares are accepted from miners (to prevent flooding with tiny shares).
+
+**Note:** The solo bridge does NOT require Redis - it's a minimal implementation that only handles job distribution and block submission. All blocks found go directly to your daemon.
+
+**Telegram Notifications:**
+
+The solo bridge can send Telegram notifications when blocks are found. To enable:
+
+1. **Create a Telegram Bot:**
+   - Search for `@BotFather` in Telegram
+   - Send `/newbot` and follow prompts to create your bot
+   - Save the token provided (e.g., `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`)
+
+2. **Get Your Chat ID:**
+   - Visit: `https://api.telegram.org/botYOUR_BOT_TOKEN/getUpdates`
+   - Start a chat with your bot (search by username)
+   - Send any message to the bot
+   - Find `"chat":{"id":123456789}` - that number is your chat ID
+
+3. **Configure in `config-solo.json`:**
+   ```json
+   "telegram": {
+       "enabled": true,
+       "token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
+       "chatId": "123456789"
+   }
+   ```
+
+---
 
 
 Donations

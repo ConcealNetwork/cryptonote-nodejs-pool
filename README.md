@@ -779,12 +779,13 @@ cp config-solo.json.example config-solo.json
 {
     "daemon": {
         "host": "127.0.0.1",
-        "port": 18081
+        "port": 16000
     },
     "solo": {
-        "host": "127.0.0.1",
-        "port": 3333,
-        "defaultDifficulty": 1000,
+        "host": "0.0.0.0",
+        "port": 6666,
+        "defaultDifficulty": 20000,
+        "targetShareTime": 15,
         "minDifficulty": 500,
         "maxDifficulty": 100000,
         "minerTimeout": 900,
@@ -799,17 +800,17 @@ cp config-solo.json.example config-solo.json
 
 3. Start the solo bridge:
 ```bash
-node index.js --at-home-solo
+node index.js --solo-mining
 ```
 
-4. Connect your miner to `stratum+tcp://127.0.0.1:3333` (or whatever port you configured)
+4. Connect your miner to `stratum+tcp://<port-of-cryptonote-nodejs-pool>:6666` (or whatever port you configured)
 
 **Health Check:**
 
 You can run a one-off health check to verify your daemon connection and see the current block template:
 
 ```bash
-node index.js --at-home-solo --health
+node index.js --solo-mining --health
 ```
 
 This will:

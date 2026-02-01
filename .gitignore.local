@@ -1,0 +1,5 @@
+# Local config files (not tracked)
+config.json
+config-*.json
+!config.json.template
+!config-solo.json.example

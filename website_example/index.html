@@ -3,6 +3,7 @@
 <head lang="en">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
     <title>Cryptonote Mining Pool</title>
 
@@ -14,7 +15,7 @@
     <link href="//netdna.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
 
     <link href="themes/default.css" rel="stylesheet">
-    <link href="themes/custom.css" rel="stylesheet">
+    <link href="themes/custom.css?v=3.6" rel="stylesheet">
 </head>
 <body>
 
@@ -88,16 +89,16 @@
 <!-- Footer -->
 <footer>
     <div class="text-muted">
-        <span tkey="poweredBy">Powered by</span> <a target="_blank" href="https://github.com/dvandal/cryptonote-nodejs-pool"><i class="fa fa-github"></i> cryptonote-nodejs-pool</a>
+        <span tkey="poweredBy">Adapted for Conceal Network</span> <a target="_blank" href="https://github.com/concealnetwork/cryptonote-nodejs-pool"><i class="fa fa-github"></i> cryptonote-nodejs-pool</a>
         <span id="poolVersion"></span>
         <span class="hidden-xs"><span tkey="openSource">open sourced under the</span> <a href="http://www.gnu.org/licenses/gpl-2.0.html">GPL</a></span>
     </div>
 </footer>
 
 <!-- Javascript -->
-<script src="config.js"></script>
+<script src="config.js?v=2"></script>
 <script src="lang/languages.js"></script>
-<script src="js/common.js"></script>
+<script src="js/common.js?v=3.0"></script>
 <script src="js/custom.js"></script>
 <script>
 // Store last pool statistics
@@ -125,8 +126,10 @@ function pulseLiveUpdate(){
 function updateLiveStats(data) {
     pulseLiveUpdate();   
     lastStats = data;
-    if (lastStats && lastStats.pool && lastStats.pool.totalMinersPaid.toString() == '-1'){
-        lastStats.pool.totalMinersPaid = 0;
+    if (lastStats && lastStats.pool) {
+        if (!lastStats.pool.totalMinersPaid || lastStats.pool.totalMinersPaid.toString() == '-1'){
+            lastStats.pool.totalMinersPaid = 0;
+        }
     }
     updateIndex();
     if (currentPage) currentPage.update();
@@ -134,16 +137,25 @@ function updateLiveStats(data) {
 
 // Update global informations
 function updateIndex(){
-    updateText('coinSymbol', lastStats.config.symbol);
-    updateText('g_networkHashrate', getReadableHashRateString(lastStats.network.difficulty / lastStats.config.coinDifficultyTarget) + '/sec');
-    updateText('g_poolHashrate', getReadableHashRateString(lastStats.pool.hashrate) + '/sec');    
+    if (!lastStats || !lastStats.config) return;
+    updateText('coinSymbol', lastStats.config.symbol || 'CCX');
+    if (lastStats.network && lastStats.network.difficulty && lastStats.config && lastStats.config.coinDifficultyTarget) {
+        updateText('g_networkHashrate', getReadableHashRateString(lastStats.network.difficulty / lastStats.config.coinDifficultyTarget) + '/sec');
+    } else {
+        updateText('g_networkHashrate', 'N/A');
+    }
+    if (lastStats.pool) {
+        updateText('g_poolHashrate', getReadableHashRateString(lastStats.pool.hashrate || 0) + '/sec');
+    }
     if (lastStats.miner && lastStats.miner.hashrate){
          updateText('g_userHashrate', getReadableHashRateString(lastStats.miner.hashrate) + '/sec');
     }
     else{
         updateText('g_userHashrate', 'N/A');
     }    
-    updateText('poolVersion', lastStats.config.version);
+    if (lastStats.config.version) {
+        updateText('poolVersion', lastStats.config.version);
+    }
 }
 
 // Load live statistics
@@ -153,29 +165,64 @@ function loadLiveStats(reload) {
     var address = getCurrentAddress();
     if (address) { apiURL = apiURL + '?address=' + encodeURIComponent(address); }
 
-    if (xhrLiveStats) xhrLiveStats.abort();
+    if (abortController) {
+        abortController.abort();
+    }
     
-    $.get(apiURL, function(data){        
+    fetch(apiURL, {
+        method: 'GET',
+        cache: 'no-cache'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
         updateLiveStats(data);
         if (!reload) routePage(fetchLiveStats);
+    })
+    .catch(error => {
+        console.error('Error loading live stats:', error);
     });
 }
 
 // Fetch live statistics
-var xhrLiveStats;
+var abortController;
 function fetchLiveStats() {
     var apiURL = api + '/live_stats';
 
     var address = getCurrentAddress();
     if (address) { apiURL = apiURL + '?address=' + encodeURIComponent(address); }
     
-    xhrLiveStats = $.ajax({
-        url: apiURL,
-        dataType: 'json',
-        cache: 'false'
-    }).done(function(data){
+    // Abort previous request if still pending
+    if (abortController) {
+        abortController.abort();
+    }
+    
+    abortController = new AbortController();
+    
+    fetch(apiURL, {
+        method: 'GET',
+        cache: 'no-cache',
+        signal: abortController.signal
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
         updateLiveStats(data);
-    }).always(function(){
+    })
+    .catch(error => {
+        if (error.name !== 'AbortError') {
+            console.error('Error fetching live stats:', error);
+        }
+    })
+    .finally(() => {
         fetchLiveStats();
     });
 }

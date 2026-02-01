@@ -7,3 +7,4 @@ logs/
 website/
 
 config-solo.json
+ecosystem.config.js

@@ -55,6 +55,19 @@
         </div>
     </div>
     
+    <!-- Wallet Balance -->
+    <div class="col-lg-3 col-sm-4">
+        <div class="infoBox hoverExpandEffect">
+            <div class="icon">
+                <span class="fa fa-credit-card"></span>
+            </div>
+            <div class="content">
+                <div class="text">Wallet Balance</div>
+                <div class="value"><span id="walletBalance">...</span></div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Registered Addresses -->
     <div class="col-lg-3 col-sm-4">
         <div class="infoBox hoverExpandEffect">
@@ -64,6 +77,19 @@
             <div class="content">
                 <div class="text">Registered Addresses</div>
                 <div class="value"><span id="registeredAddresses">...</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blocks Pending -->
+    <div class="col-lg-3 col-sm-4">
+        <div class="infoBox hoverExpandEffect">
+            <div class="icon">
+                <span class="fa fa-clock-o"></span>
+            </div>
+            <div class="content">
+                <div class="text">Blocks Pending (Locked)</div>
+                <div class="value"><span id="blocksPending">...</span></div>
             </div>
         </div>
     </div>
@@ -94,15 +120,86 @@
         </div>
     </div>
     
-    <!-- Average Luck (shares/diff) -->
+    <!-- Blocks Luck -->
+    <div class="col-lg-3 col-sm-4">
+        <div class="infoBox hoverExpandEffect">
+            <div class="icon">
+                <span class="fa fa-trophy"></span>
+            </div>
+            <div class="content">
+                <div class="text">Blocks Luck (found)</div>
+                <div class="value"><span id="averageLuck">...</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Current Round Effort -->
     <div class="col-lg-3 col-sm-4">
         <div class="infoBox hoverExpandEffect">
             <div class="icon">
                 <span class="fa fa-line-chart"></span>
             </div>
             <div class="content">
-                <div class="text">Average Luck (shares/diff)</div>
-                <div class="value"><span id="averageLuck">...</span></div>
+                <div class="text">Current Round Effort</div>
+                <div class="value"><span id="currentRoundEffort">...</span></div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+<!-- Current Pool Activity -->
+<h3>Current Pool Activity</h3>
+<div id="currentActivity" class="row">
+
+    <!-- Current Miners -->
+    <div class="col-lg-3 col-sm-4">
+        <div class="infoBox hoverExpandEffect">
+            <div class="icon">
+                <span class="fa fa-users"></span>
+            </div>
+            <div class="content">
+                <div class="text">Active Miners</div>
+                <div class="value"><span id="currentMiners">...</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Workers -->
+    <div class="col-lg-3 col-sm-4">
+        <div class="infoBox hoverExpandEffect">
+            <div class="icon">
+                <span class="fa fa-users"></span>
+            </div>
+            <div class="content">
+                <div class="text">Active Workers</div>
+                <div class="value"><span id="currentWorkers">...</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Pool Hashrate -->
+    <div class="col-lg-3 col-sm-4">
+        <div class="infoBox hoverExpandEffect">
+            <div class="icon">
+                <span class="fa fa-tachometer"></span>
+            </div>
+            <div class="content">
+                <div class="text">Pool Hashrate</div>
+                <div class="value"><span id="currentHashrate">...</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Round Hashes -->
+    <div class="col-lg-3 col-sm-4">
+        <div class="infoBox hoverExpandEffect">
+            <div class="icon">
+                <span class="fa fa-cubes"></span>
+            </div>
+            <div class="content">
+                <div class="text">Current Round Hashes</div>
+                <div class="value"><span id="currentRoundHashes">...</span></div>
             </div>
         </div>
     </div>
@@ -127,41 +224,71 @@ function formatLuck(difficulty, shares) {
     }	
 }
 
-function getStats(promptPassword) {
-    var password = docCookies.getItem('password');
-
-    if(!password || promptPassword) {
-        password = prompt('Enter admin password');
-    }
-
+async function getStats() {
     $('#loading').show();
-    $.ajax({
-        url: api + '/admin_stats',
-        data: {password: password},
-	dataType: 'json',
-        cache: 'false',
-        success: function(data) {
-            docCookies.setItem('password', password, Infinity);
-            $('#loading').hide();
-            renderData(data);
-        },
-        error: function(e) {
-            docCookies.removeItem('password');
-            getStats(true);
+    try {
+        const response = await fetch(api + '/admin_stats', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            cache: 'no-cache'
+        });
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                // JWT expired, will be handled by global error handler
+                $('#loading').hide();
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-    });
+        
+        const data = await response.json();
+        $('#loading').hide();
+        renderData(data);
+    } catch (error) {
+        $('#loading').hide();
+        console.error('Error loading stats:', error);
+    }
 }
 
 function renderData(data) {
+    // Historical stats (blocks and payments)
     $('#totalOwed').text(getReadableCoins(data.totalOwed));
     $('#totalPaid').text(getReadableCoins(data.totalPaid));
     $('#totalMined').text(getReadableCoins(data.totalRevenue));
-    $('#profit').text(getReadableCoins(data.totalRevenue - data.totalOwed - data.totalPaid));
+    // Use poolFeeEarned (pool's actual fee from mining) instead of calculated difference
+    // This avoids showing negative profit when manual payments exceed mined amount
+    $('#profit').text(getReadableCoins(data.poolFeeEarned || 0));
+    $('#walletBalance').text(getReadableCoins(data.walletBalance || 0));
+    $('#blocksPending').text(data.blocksPending || 0);
     $('#blocksUnlocked').text(data.blocksUnlocked);
-    $('#averageLuck').html(formatLuck(data.totalDiff, data.totalShares));
+    
+    // Luck metrics
+    $('#averageLuck').html(formatLuck(data.totalDiff, data.totalShares)); // Completed blocks only
+    $('#currentRoundEffort').html(formatLuck(data.currentRoundDifficulty, data.currentRoundShares)); // Current round effort
+    
     $('#blocksOrphaned').text(data.blocksOrphaned);
-    $('#orphanPercent').text((data.blocksOrphaned / data.blocksUnlocked * 100).toFixed(2) + '%');
-    $('#registeredAddresses').text(data.totalWorkers);
+    if (data.blocksUnlocked > 0) {
+        $('#orphanPercent').text((data.blocksOrphaned / data.blocksUnlocked * 100).toFixed(2) + '%');
+    } else {
+        $('#orphanPercent').text('N/A');
+    }
+    
+    // Registered addresses - show real miners + donation addresses
+    var addressText = data.totalWorkers || 0;
+    if (data.donationAddresses && data.donationAddresses > 0) {
+        addressText += ' + ' + data.donationAddresses + ' donation';
+    }
+    $('#registeredAddresses').text(addressText);
+    
+    // Current pool activity
+    $('#currentMiners').text(data.currentMiners || 0);
+    $('#currentWorkers').text(data.currentWorkers || 0);
+    $('#currentHashrate').text(getReadableHashRateString(data.currentHashrate || 0) + '/s');
+    $('#currentRoundHashes').text(getReadableHashRateString(data.currentRoundHashes || 0));
 }
 
 $(function() {

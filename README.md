@@ -1,13 +1,16 @@
 cryptonote-nodejs-pool
 ======================
 
-High performance Node.js (with native C addons) mining pool for CryptoNote based coins. Comes with lightweight example front-end script which uses the pool's AJAX API. Support for Cryptonight (Original, Monero v7, Stellite v7), Cryptonight Light (Original, Aeon v7, IPBC) and Cryptonight Heavy (Sumokoin) algorithms.
+High performance Node.js (with native C addons) mining pool for CryptoNote based coins. Comes with lightweight example front-end script which uses the pool's REST API with modern fetch() calls. Support for Cryptonight (Original, Monero v7, Stellite v7), Cryptonight Light (Original, Aeon v7, IPBC) and Cryptonight Heavy (Sumokoin) algorithms.
 
+---
+
+**Acknowledgment:** This project is based on the original work by [Daniel Vandal (dvandal)](https://github.com/dvandal/cryptonote-nodejs-pool). We are grateful for his contributions to the CryptoNote mining pool ecosystem. This fork includes modernizations and updates for compatibility with current Node.js and Redis versions. Please refer to the [License](#license) section for compliance information.
+
+---
 
 #### Table of Contents
 * [Features](#features)
-* [Community Support](#community--support)
-* [Pools Using This Software](#pools-using-this-software)
 * [Usage](#usage)
   * [Requirements](#requirements)
   * [Downloading & Installing](#1-downloading--installing)
@@ -91,23 +94,6 @@ Features
 * Top 10 miners report
 * Multilingual user interface
 
-
-Community / Support
-===
-
-* [GitHub Wiki](https://github.com/dvandal/cryptonote-nodejs-pool/wiki)
-* [GitHub Issues](https://github.com/dvandal/cryptonote-nodejs-pool/issues)
-* [Telegram Group](http://t.me/CryptonotePool)
-
-#### Pools Using This Software
-
-* https://imaginary.stream/
-* https://graft.anypool.net/
-* https://graft.dark-mine.su/
-* http://itns.proxpool.com/
-* https://bytecoin.pt
-* http://ita.minexmr24.ru/
-* https://pool.croatpirineus.cat
 
 Usage
 ===

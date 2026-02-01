@@ -3,6 +3,7 @@
 <head lang="en">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
     <title>Mining Pool Admin Panel</title>
 
@@ -44,8 +45,8 @@
                     <i class="fa fa-gears"></i> Tools
                 </a></li>
 
-                <li class="sign-out"><a class="hot_link" href="/">
-                    <i class="fa fa-sign-out"></i> Return to Pool
+                <li class="sign-out"><a href="#" id="returnToPoolBtn">
+                    <i class="fa fa-home"></i> Return to Pool
                 </a></li>
 
             </ul>
@@ -63,36 +64,95 @@
 <!-- Footer -->
 <footer>
     <div class="text-muted">
-        Powered by <a target="_blank" href="https://github.com/dvandal/cryptonote-nodejs-pool"><i class="fa fa-github"></i> cryptonote-nodejs-pool</a>
+        Adapted for Conceal Network <a target="_blank" href="https://github.com/concealnetwork/cryptonote-nodejs-pool"><i class="fa fa-github"></i> cryptonote-nodejs-pool</a>
         <span id="poolVersion"></span>
 	<span class="hidden-xs">open sourced under the <a href="http://www.gnu.org/licenses/gpl-2.0.html">GPL</a></span>
     </div>
 </footer>
 
 <!-- Javascript -->
-<script src="config.js"></script>
-<script src="js/common.js"></script>
+<script src="config.js?v=2"></script>
+<script src="js/common.js?v=3.0"></script>
 <script>
-// Fetch pool statistics
-lastStats = {};
+// Check JWT authentication on page load
 $(function() {
-    $.get(api + '/stats', function(data) {
+    // Get JWT from cookie
+    var jwt = getCookie('jwtToken');
+    
+    if (!jwt) {
+        // No JWT, redirect to login
+        window.location.href = '/admin-login.html';
+        return;
+    }
+    
+    // JWT exists, proceed with loading
+    initializeAdmin();
+});
+
+// Get cookie helper
+function getCookie(name) {
+    var value = "; " + document.cookie;
+    var parts = value.split("; " + name + "=");
+    if (parts.length == 2) return parts.pop().split(";").shift();
+    return null;
+}
+
+// Setup AJAX to include JWT only for admin endpoints
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        // Only add Authorization header for admin endpoints
+        if (settings.url && settings.url.indexOf('/admin_') > -1) {
+            var jwt = getCookie('jwtToken');
+            if (jwt) {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + jwt);
+            }
+        }
+    },
+    error: function(xhr, settings) {
+        // If 401 on admin endpoint, JWT expired - redirect to login
+        if (xhr.status === 401 && settings.url && settings.url.indexOf('/admin_') > -1) {
+            document.cookie = 'jwtToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+            window.location.href = '/admin-login.html';
+        }
+    }
+});
+
+// Initialize admin panel
+function initializeAdmin() {
+    // Fetch pool statistics
+    lastStats = {};
+    fetch(api + '/stats', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-cache'
+    })
+    .then(response => response.json())
+    .then(data => {
         lastStats = data;
         $('#poolVersion').html(lastStats.config.version);
         routePage();
+    })
+    .catch(error => {
+        console.error('Error loading initial stats:', error);
     });
-});
+}
 
 function fetchLiveStats() {
-    $.ajax({
-        url: api + '/live_stats',
-        dataType: 'json',
-        cache: 'false'
-    }).done(function(data) {
+    fetch(api + '/live_stats', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-cache'
+    })
+    .then(response => response.json())
+    .then(data => {
         if(currentPage.update) {
             currentPage.update();
         }
-    }).always(function() {
+    })
+    .catch(error => {
+        console.error('Error fetching live stats:', error);
+    })
+    .finally(() => {
         fetchLiveStats();
     });
 }
@@ -106,10 +166,19 @@ function renderTemplate(usersData, templateId, view) {
     $(view).html(html);
 }
 
-// Initialize
+// Initialize styles
 $(function(){
     $("head").append("<link rel='stylesheet' href=" + themeCss + ">");
     $("head").append("<link rel='stylesheet' href=themes/admin.css>");
+});
+
+// Return to pool handler (clears JWT)
+$('#returnToPoolBtn').on('click', function(e) {
+    e.preventDefault();
+    // Delete JWT cookie
+    document.cookie = 'jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    // Redirect to pool
+    window.location.href = '/';
 });
 </script>
 

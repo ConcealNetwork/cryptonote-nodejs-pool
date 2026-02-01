@@ -1,8 +1,14 @@
 {
     "name": "cryptonote-nodejs-pool",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "license": "GPL-2.0",
     "author": "Daniel Vandal",
+    "contributors": [
+        {
+            "name": "Conceal Network Dev team",
+            "url": "https://github.com/concealnetwork/cryptonote-nodejs-pool"
+        }
+    ],
     "repository": {
         "type": "git",
         "url": "https://github.com/dvandal/cryptonote-nodejs-pool.git"
@@ -25,7 +31,7 @@
         "telegraf": "^4.16.3",
         "nodemailer": "^7.0.12",
         "nodemailer-sendmail-transport": "^1.0.2",
-        "redis": "^4.6.13",
+        "redis": "^5.10.0",
         "socket.io": "^4.8.3",
         "time-ago": "^0.2.1",
         "utf-8-validate": "^6.0.3"
@@ -38,6 +44,7 @@
     },
     "overrides": {
         "bignum": "^0.13.1",
+        "base58-native": "npm:bs58@^5.0.0",
         "cookie": "^1.1.1",
         "form-data": "^4.0.5",
         "qs": "^6.14.1",

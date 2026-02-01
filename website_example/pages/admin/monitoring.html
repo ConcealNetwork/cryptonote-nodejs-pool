@@ -104,7 +104,8 @@ function monitoringInfoParse(data) {
         properData['logs'] = data['logs'];
         for(var log in data['logs']) {
             data['logs'][log].changed = formatDate(data['logs'][log].changed);
-            data['logs'][log].link = api + '/admin_log?file=' + log + '&password=' + docCookies.getItem('password');
+            // Use session cookie for authentication, don't pass password in URL
+            data['logs'][log].link = api + '/admin_log?file=' + log;
         }
     }
     properData['monitoringDaemon'] = monitoringDaemon;
@@ -113,31 +114,33 @@ function monitoringInfoParse(data) {
     return properData;
 }
 
-function renderLogInfo(promptPassword) {
-    var password = docCookies.getItem('password');
-
-    if(!password || promptPassword) {
-        password = prompt('Enter admin password');
-    }
-    
-    $.ajax({
-        url: api + '/admin_monitoring',
-        data: {password: password},
-        dataType: 'json',
-        cache: false,
-        success: function(data) {
-            docCookies.setItem('password', password, Infinity);
+async function renderLogInfo() {
+    try {
+        const response = await fetch(api + '/admin_monitoring', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            cache: 'no-cache'
+        });
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                // JWT expired, will be handled by global error handler
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
             renderTemplate(monitoringInfoParse(data), '#monitoringInfo', '#monitoringInfoView');
-	    
             $('#daemonStatus').addClass(data['monitoring'].daemon.lastStatus == 'ok' ? 'text-success' : 'text-danger');
             $('#walletStatus').addClass(data['monitoring'].wallet.lastStatus == 'ok' ? 'text-success' : 'text-danger');
-
             $('#logTable th.sort').on('click', sortTable);
-        },
-        error: function(e) {
-            docCookies.removeItem('password');
+    } catch (error) {
+        console.error('Error loading monitoring data:', error);
         }
-    });
 }
 
 $(function() {

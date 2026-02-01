@@ -104,37 +104,48 @@ function showSuccess(id, message) {
 function getPayoutLevel(address) {
     if (!address || address == '') return;
     
-    $.ajax({
-        url: api + '/get_miner_payout_level',
-        data: {
-            address: address
-        },
-        dataType: 'json',
-        cache: 'false'
-    }).done(function(data){
+    const url = new URL(api + '/get_miner_payout_level', window.location.origin);
+    url.searchParams.append('address', address);
+    
+    fetch(url, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-cache'
+    })
+    .then(response => response.json())
+    .then(data => {
         if (data.level != undefined) {
             $('#yourPayoutRate').val(data.level);
         }
+    })
+    .catch(error => {
+        console.error('Error loading payout level:', error);
     });
 } 
 
 // Set payout level
 function setPayoutLevel(address, ip, level) {
-    $.ajax({
-        url: api + '/set_miner_payout_level',
-        data: {
-            address: address,
-            ip: ip,
-            level: level
-        },
-        dataType: 'json',
-        cache: 'false'
-    }).done(function(data){
+    const url = new URL(api + '/set_miner_payout_level', window.location.origin);
+    url.searchParams.append('address', address);
+    url.searchParams.append('ip', ip);
+    url.searchParams.append('level', level);
+    
+    fetch(url, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-cache'
+    })
+    .then(response => response.json())
+    .then(data => {
         if (data.status == 'done') {
             showSuccess('minerPayoutSet', 'Done! Your minimum payout level was set');
         } else {
             showError('error', 'Error:', data.status);
         }
+    })
+    .catch(error => {
+        showError('error', 'Connection error');
+        console.error('Error setting payout level:', error);
     });
 }
 
@@ -175,17 +186,22 @@ function isEmail(email) {
 function getEmailAddress(address) {
     if (!address || address == '') return;
     
-    $.ajax({
-        url: api + '/get_email_notifications',
-        data: {
-            address: address
-        },
-        dataType: 'json',
-        cache: 'false'
-    }).done(function(data){
+    const url = new URL(api + '/get_email_notifications', window.location.origin);
+    url.searchParams.append('address', address);
+    
+    fetch(url, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-cache'
+    })
+    .then(response => response.json())
+    .then(data => {
         if (data.email != undefined) {
             $('#yourEmail').val(data.email);
         }
+    })
+    .catch(error => {
+        console.error('Error loading email notifications:', error);
     });
 }
     
@@ -213,17 +229,19 @@ function setEmailNotifications(email, address, ip, enable) {
         return;
     }
 
-    $.ajax({
-        url: api + '/set_email_notifications',
-        data: {
-            address: address,
-            ip: ip,
-            email: email,
-            action: enable ? 'enable' : 'disable'
-        },
-        dataType: 'json',
-        cache: 'false'
-    }).done(function(data){
+    const url = new URL(api + '/set_email_notifications', window.location.origin);
+    url.searchParams.append('address', address);
+    url.searchParams.append('ip', ip);
+    url.searchParams.append('email', email);
+    url.searchParams.append('action', enable ? 'enable' : 'disable');
+    
+    fetch(url, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-cache'
+    })
+    .then(response => response.json())
+    .then(data => {
         if (data.status == "done") {
             if (enable) {
                 showSuccess('notificationEnabled', 'Done! Email notifications have been enabled');
@@ -233,6 +251,10 @@ function setEmailNotifications(email, address, ip, enable) {
         } else {
             showError('error', 'Error:', data.status);
         }
+    })
+    .catch(error => {
+        showError('error', 'Connection error');
+        console.error('Error setting email notifications:', error);
     });
 }
 

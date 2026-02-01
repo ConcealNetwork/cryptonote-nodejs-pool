@@ -228,25 +228,45 @@ currentPage = {
         }
     },
     update: function(){
-        $('#networkLastBlockFound').timeago('update', new Date(lastStats.lastblock.timestamp * 1000).toISOString());
+        if (!lastStats || !lastStats.config) return;
+        if (lastStats.lastblock && lastStats.lastblock.timestamp) {
+            $('#networkLastBlockFound').timeago('update', new Date(lastStats.lastblock.timestamp * 1000).toISOString());
+        }
         
-        updateText('networkHashrate', getReadableHashRateString(lastStats.network.difficulty / lastStats.config.coinDifficultyTarget) + '/sec');
-        updateText('networkDifficulty', formatNumber(lastStats.network.difficulty.toString(), ' '));
-        updateText('blockchainHeight', formatNumber(lastStats.network.height.toString(), ' '));
-        updateText('lastHash', lastStats.lastblock.hash).setAttribute('href', getBlockchainUrl(lastStats.lastblock.hash));
-
-        if (lastStats.config.networkFee) {
-            var networkFeePercent = lastStats.config.networkFee / 100;
-            updateText('networkLastReward', getReadableCoins(lastStats.lastblock.reward - (lastStats.lastblock.reward * networkFeePercent)));
+        if (lastStats.network && lastStats.network.difficulty && lastStats.config && lastStats.config.coinDifficultyTarget) {
+            updateText('networkHashrate', getReadableHashRateString(lastStats.network.difficulty / lastStats.config.coinDifficultyTarget) + '/sec');
+            updateText('networkDifficulty', formatNumber((lastStats.network.difficulty || 0).toString(), ' '));
+            updateText('blockchainHeight', formatNumber((lastStats.network.height || 0).toString(), ' '));
         } else {
-            updateText('networkLastReward', getReadableCoins(lastStats.lastblock.reward));
+            updateText('networkHashrate', 'N/A');
+            updateText('networkDifficulty', 'N/A');
+            updateText('blockchainHeight', 'N/A');
+        }
+        if (lastStats.lastblock && lastStats.lastblock.hash) {
+            var lastHashEl = updateText('lastHash', lastStats.lastblock.hash);
+            if (lastHashEl) {
+                lastHashEl.setAttribute('href', getBlockchainUrl(lastStats.lastblock.hash));
+            }
         }
 
-        updateText('poolHashrate', getReadableHashRateString(lastStats.pool.hashrate) + '/sec');
-        updateText('blocksTotal', lastStats.pool.totalBlocks.toString());
+        if (lastStats.lastblock && lastStats.lastblock.reward) {
+            if (lastStats.config.networkFee) {
+                var networkFeePercent = lastStats.config.networkFee / 100;
+                updateText('networkLastReward', getReadableCoins(lastStats.lastblock.reward - (lastStats.lastblock.reward * networkFeePercent)));
+            } else {
+                updateText('networkLastReward', getReadableCoins(lastStats.lastblock.reward));
+            }
+        }
+
+        if (lastStats.pool) {
+            updateText('poolHashrate', getReadableHashRateString(lastStats.pool.hashrate || 0) + '/sec');
+            updateText('blocksTotal', (lastStats.pool.totalBlocks || 0).toString());
+        }
         
-        var hashPower = lastStats.pool.hashrate / (lastStats.network.difficulty / lastStats.config.coinDifficultyTarget) * 100;
-        updateText('hashPower', hashPower.toFixed(2) + '%');
+        if (lastStats.pool && lastStats.network && lastStats.config.coinDifficultyTarget && lastStats.pool.hashrate) {
+            var hashPower = lastStats.pool.hashrate / (lastStats.network.difficulty / lastStats.config.coinDifficultyTarget) * 100;
+            updateText('hashPower', hashPower.toFixed(2) + '%');
+        }
 
         if (lastStats.pool.lastBlockFound) {
             var d = new Date(parseInt(lastStats.pool.lastBlockFound)).toISOString();
@@ -256,24 +276,36 @@ currentPage = {
             $('#poolLastBlockFound').removeAttr('title').data('ts', '').update('Never');
         }
 
-        updateText('poolMiners', lastStats.pool.miners.toString());
-        updateText('poolWorkers', lastStats.pool.workers.toString());
-
-        var totalFee = lastStats.config.fee;
-        if (Object.keys(lastStats.config.donation).length) {
-            var totalDonation = 0;
-            for(var i in lastStats.config.donation) {
-                totalDonation += lastStats.config.donation[i];
-            }
-            totalFee += totalDonation;
+        if (lastStats.pool) {
+            updateText('poolMiners', (lastStats.pool.miners || 0).toString());
+            updateText('poolWorkers', (lastStats.pool.workers || 0).toString());
         }
-        updateText('poolFee', (totalFee > 0 && totalFee != 100 ? floatToString(totalFee) : (totalFee == 100 ? '100' : '0')) + '%');
 
-        updateText('paymentsInterval', getReadableTime(lastStats.config.paymentsInterval));
-        updateText('paymentsMinimum', getReadableCoins(lastStats.config.minPaymentThreshold));
+        if (lastStats.config) {
+            var totalFee = lastStats.config.fee || 0;
+            if (lastStats.config.donation && Object.keys(lastStats.config.donation).length) {
+                var totalDonation = 0;
+                for(var i in lastStats.config.donation) {
+                    totalDonation += lastStats.config.donation[i];
+                }
+                totalFee += totalDonation;
+            }
+            updateText('poolFee', (totalFee > 0 && totalFee != 100 ? floatToString(totalFee) : (totalFee == 100 ? '100' : '0')) + '%');
 
-        updateText('blockSolvedTime', getReadableTime(lastStats.network.difficulty / lastStats.pool.hashrate));
-        updateText('currentEffort', (lastStats.pool.roundHashes / lastStats.network.difficulty * 100).toFixed(1) + '%');
+            if (lastStats.config.paymentsInterval) {
+                updateText('paymentsInterval', getReadableTime(lastStats.config.paymentsInterval));
+            }
+            if (lastStats.config.minPaymentThreshold) {
+                updateText('paymentsMinimum', getReadableCoins(lastStats.config.minPaymentThreshold));
+            }
+        }
+
+        if (lastStats.network && lastStats.pool && lastStats.pool.hashrate) {
+            updateText('blockSolvedTime', getReadableTime(lastStats.network.difficulty / lastStats.pool.hashrate));
+        }
+        if (lastStats.pool && lastStats.network && lastStats.pool.roundHashes && lastStats.network.difficulty) {
+            updateText('currentEffort', (lastStats.pool.roundHashes / lastStats.network.difficulty * 100).toFixed(1) + '%');
+        }
 
         if (lastStats.charts && !chartsInitialized) {
             intervalChartsUpdate = setInterval(createCharts, 60*1000);

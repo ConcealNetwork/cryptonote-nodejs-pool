@@ -9,6 +9,7 @@
 var fs = require('fs');
 var cluster = require('cluster');
 var os = require('os');
+var v8 = require('v8');
 
 // Load configuration
 require('./lib/configReader.js');
@@ -20,7 +21,7 @@ require('./lib/logger.js');
 var redis = require('redis');
 
 var redisDB = (config.redis.db && config.redis.db > 0) ? config.redis.db : 0;
-// Redis v4+ uses new API format, but maintains callback support
+// Redis client uses modern API format
 var redisOptions = {
     socket: {
         host: config.redis.host,
@@ -43,7 +44,7 @@ global.redisClient.on('error', function(err) {
     }
 });
 
-// Connect asynchronously - Redis v4 requires explicit connection
+// Connect asynchronously - explicit connection required
 global.redisClient.connect().catch(function(err) {
     if (typeof log === 'function') {
         log('error', 'redis', 'Failed to connect to Redis: %s', [err]);
@@ -83,6 +84,77 @@ require('./lib/exceptionWriter.js')(logSystem);
 
 // Pool informations
 log('info', logSystem, 'Starting Cryptonote Node.JS pool version %s', [version]);
+
+/**
+ * CPU Usage Tracking
+ **/
+var lastCpuMeasure = null;
+
+function getCpuUsage() {
+    const cpus = os.cpus();
+    let user = 0, nice = 0, sys = 0, idle = 0, irq = 0;
+
+    for (let cpu of cpus) {
+        user += cpu.times.user;
+        nice += cpu.times.nice;
+        sys += cpu.times.sys;
+        idle += cpu.times.idle;
+        irq += cpu.times.irq;
+    }
+
+    const current = { user, nice, sys, idle, irq };
+    
+    if (!lastCpuMeasure) {
+        lastCpuMeasure = current;
+        return null;
+    }
+
+    const userDiff = current.user - lastCpuMeasure.user;
+    const niceDiff = current.nice - lastCpuMeasure.nice;
+    const sysDiff = current.sys - lastCpuMeasure.sys;
+    const idleDiff = current.idle - lastCpuMeasure.idle;
+    const irqDiff = current.irq - lastCpuMeasure.irq;
+    const total = userDiff + niceDiff + sysDiff + idleDiff + irqDiff;
+
+    lastCpuMeasure = current;
+
+    if (total === 0) return null;
+
+    return {
+        user: ((userDiff / total) * 100).toFixed(2),
+        nice: ((niceDiff / total) * 100).toFixed(2),
+        sys: ((sysDiff / total) * 100).toFixed(2),
+        idle: ((idleDiff / total) * 100).toFixed(2),
+        irq: ((irqDiff / total) * 100).toFixed(2),
+        used: (((total - idleDiff) / total) * 100).toFixed(2)
+    };
+}
+
+function logSystemStats() {
+    // CPU Usage
+    const cpuUsage = getCpuUsage();
+    if (cpuUsage) {
+        log('info', logSystem, 'CPU Usage: %s%% used | user: %s%%, sys: %s%%, nice: %s%%, irq: %s%%, idle: %s%%', 
+            [cpuUsage.used, cpuUsage.user, cpuUsage.sys, cpuUsage.nice, cpuUsage.irq, cpuUsage.idle]);
+    }
+
+    // Memory Usage
+    const heapStats = v8.getHeapStatistics();
+    const totalHeapMB = (heapStats.total_heap_size / 1024 / 1024).toFixed(2);
+    const usedHeapMB = (heapStats.used_heap_size / 1024 / 1024).toFixed(2);
+    const heapLimitMB = (heapStats.heap_size_limit / 1024 / 1024).toFixed(2);
+    const heapUsagePercent = ((heapStats.used_heap_size / heapStats.total_heap_size) * 100).toFixed(2);
+    
+    const memUsage = process.memoryUsage();
+    const rssMB = (memUsage.rss / 1024 / 1024).toFixed(2);
+    const externalMB = (memUsage.external / 1024 / 1024).toFixed(2);
+
+    log('info', logSystem, 'Memory: RSS %s MB | Heap: %s MB / %s MB (%s%%) | Limit: %s MB | External: %s MB', 
+        [rssMB, usedHeapMB, totalHeapMB, heapUsagePercent, heapLimitMB, externalMB]);
+}
+
+// Start system monitoring (every 10 seconds)
+setInterval(logSystemStats, 10000);
  
 // Run a single module ?
 var singleModule = (function(){
@@ -144,9 +216,9 @@ var singleModule = (function(){
  * Check redis database version
  **/
 function checkRedisVersion(callback){
-    // Redis v4+ requires connection first, then we can use callbacks
+    // Requires connection first, then we can use callbacks
     function doCheck() {
-        // Redis v4 info() returns a promise, convert to callback
+        // info() returns a promise, convert to callback
         global.redisClient.info().then(function(response){
             var parts = response.split('\r\n');
             var version;

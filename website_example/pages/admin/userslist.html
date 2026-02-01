@@ -10,6 +10,15 @@
         <td class="col4" data-sort="{{this.wallet.pending}}">{{this.readablePending}}</td>
         <td class="col5" data-sort="{{this.wallet.paid}}">{{this.readablePaid}}</td>
         <td class="col6" data-sort="{{this.wallet.lastShare}}">{{this.timeago}}</td>
+        <td class="col7">
+            {{#if this.hasPendingBalance}}
+            <button class="btn btn-primary btn-sm pay-button" data-address="{{this.miner}}" data-balance="{{this.wallet.pending}}" title="Pay {{this.readablePending}} to this miner">
+                <i class="fa fa-money"></i> Pay Now
+            </button>
+            {{else}}
+            <span class="text-muted">No balance</span>
+            {{/if}}
+        </td>
     </tr>
     {{/each}}
 </script>
@@ -26,6 +35,7 @@
                 <th class="col4 sort">Pending <i class="fa fa-sort"></i></th>
                 <th class="col5 sort">Paid <i class="fa fa-sort"></i></th>
                 <th class="col6 sort">Last share <i class="fa fa-sort"></i></th>
+                <th class="col7">Actions</th>
             </tr>
             </thead>
             <tbody id="template">
@@ -52,7 +62,8 @@ function parseUsers(wallets) {
                 readablePending: getReadableCoins(userData.pending, null, true),
                 readablePaid: getReadableCoins(userData.paid, null, true),
                 readableHashrate: getReadableHashRateString(userData.hashrate) + '/s',
-                readableHashes: getReadableHashRateString(userData.hashes)
+                readableHashes: getReadableHashRateString(userData.hashes),
+                hasPendingBalance: userData.pending && userData.pending > 0
             });
 	    totalUsers++;
         }
@@ -66,26 +77,91 @@ function parseUsers(wallets) {
     return properObject;
 }
 
-function createUserTable(promptPassword) {
-    var password = docCookies.getItem('password');
+async function createUserTable() {
+    try {
+        const response = await fetch(api + '/admin_users', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            cache: 'no-cache'
+        });
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                // JWT expired, will be handled by global error handler
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        renderTemplate(parseUsers(data), '#usersListTable', '#template');
+        
+        // Attach click handlers to pay buttons
+        $('.pay-button').off('click').on('click', handleManualPayment);
+    } catch (error) {
+        console.error('Error loading users:', error);
+    }
+}
 
-    if(!password || promptPassword) {
-        password = prompt('Enter admin password');
+async function handleManualPayment(event) {
+    const button = $(event.currentTarget);
+    const address = button.data('address');
+    const balance = button.data('balance');
+    const readableBalance = getReadableCoins(balance, null, true);
+    
+    // Confirm payment
+    if (!confirm(`Are you sure you want to send ${readableBalance} to:\n${address}?\n\nThis will reset their balance to zero and pay them immediately.`)) {
+        return;
     }
     
-    $.ajax({
-        url: api + '/admin_users',
-        data: {password: password},
-        dataType: 'json',
-        cache: false,
-        success: function(data) {
-            docCookies.setItem('password', password, Infinity);
-            renderTemplate(parseUsers(data), '#usersListTable', '#template');
-        },
-        error: function(e) {
-            docCookies.removeItem('password');
+    // Disable button and show loading
+    button.prop('disabled', true);
+    button.html('<i class="fa fa-spinner fa-spin"></i> Processing...');
+    
+    try {
+        const response = await fetch(api + '/admin_manual_payment?address=' + encodeURIComponent(address), {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            cache: 'no-cache'
+        });
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                alert('Session expired. Please log in again.');
+                window.location.href = '/admin-login.html';
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-    });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            alert(`Payment successful!\n\nAmount: ${result.message}\nTransaction Hash: ${result.txHash}\n\nThe user's balance has been reset to zero.`);
+            // Refresh the table
+            createUserTable();
+        } else if (result.status === 'warning') {
+            alert(`Warning: ${result.message}\n\nPlease verify the transaction manually.`);
+            createUserTable();
+        } else {
+            alert(`Payment failed: ${result.message}`);
+            // Re-enable button
+            button.prop('disabled', false);
+            button.html('<i class="fa fa-money"></i> Pay Now');
+        }
+    } catch (error) {
+        console.error('Error processing manual payment:', error);
+        alert(`Error: ${error.message}`);
+        // Re-enable button
+        button.prop('disabled', false);
+        button.html('<i class="fa fa-money"></i> Pay Now');
+    }
 }
 
 $(function() {

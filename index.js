@@ -12,11 +12,15 @@
  */
 
 // Check for flags
+var poolMode = false;
 var soloMode = false;
 var healthCheck = false;
 var debugMode = false;
 
 for (var i = 2; i < process.argv.length; i++) {
+    if (process.argv[i] === '--pool') {
+        poolMode = true;
+    }
     if (process.argv[i] === '--solo-mining') {
         soloMode = true;
     }
@@ -28,13 +32,26 @@ for (var i = 2; i < process.argv.length; i++) {
     }
 }
 
+// Require at least one mode argument
+if (!poolMode && !soloMode) {
+    console.error('Error: No mode specified.');
+    console.error('');
+    console.error('Usage:');
+    console.error('  node index.js --pool                    # Start full mining pool');
+    console.error('  node index.js --solo-mining             # Start solo mining bridge');
+    console.error('  node index.js --solo-mining --health    # Run health check and exit');
+    console.error('  node index.js --solo-mining --debug     # Start with debug logging');
+    console.error('');
+    process.exit(1);
+}
+
 // Set global debug flag for solo bridge
 if (soloMode) {
     global.SOLO_DEBUG = debugMode;
 }
 
-if (!soloMode) {
-    // Fall back to regular pool mode
+if (poolMode) {
+    // Full pool mode
     require('./init.js');
 } else if (healthCheck) {
     // Health check mode - one-off probe then exit

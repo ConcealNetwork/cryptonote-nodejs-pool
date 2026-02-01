@@ -101,17 +101,27 @@
 // Update current page
 currentPage = {
     destroy: function(){
-        if (xhrGetPayments) xhrGetPayments.abort();
+        if (paymentsController) paymentsController.abort();
     },
     update: function(){
-        updateText('paymentsTotal', lastStats.pool.totalPayments.toString());
-        updateText('paymentsTotalPaid', lastStats.pool.totalMinersPaid.toString());
-        updateText('paymentsInterval', getReadableTime(lastStats.config.paymentsInterval));
-        updateText('paymentsMinimum', getReadableCoins(lastStats.config.minPaymentThreshold));
-        updateText('paymentsDenomination', getReadableCoins(lastStats.config.denominationUnit, 3));
-        if (!lastStats.config.slushMiningEnabled)
-            $('#slush_description').hide()
-        renderPayments(lastStats.pool.payments);
+        if (!lastStats || !lastStats.pool || !lastStats.config) return;
+        updateText('paymentsTotal', (lastStats.pool.totalPayments || 0).toString());
+        updateText('paymentsTotalPaid', (lastStats.pool.totalMinersPaid || 0).toString());
+        if (lastStats.config.paymentsInterval) {
+            updateText('paymentsInterval', getReadableTime(lastStats.config.paymentsInterval));
+        }
+        if (lastStats.config.minPaymentThreshold) {
+            updateText('paymentsMinimum', getReadableCoins(lastStats.config.minPaymentThreshold));
+        }
+        if (lastStats.config.denominationUnit) {
+            updateText('paymentsDenomination', getReadableCoins(lastStats.config.denominationUnit, 3));
+        }
+        if (lastStats.config.slushMiningEnabled === false) {
+            $('#slush_description').hide();
+        }
+        if (lastStats.pool.payments) {
+            renderPayments(lastStats.pool.payments);
+        }
     }
 };
 
@@ -182,19 +192,28 @@ function renderPayments(paymentsResults){
 }
 
 // Load more payments button
-var xhrGetPayments;
+var paymentsController;
 $('#loadMorePayments').click(function(){
-    if (xhrGetPayments) xhrGetPayments.abort();
-    xhrGetPayments = $.ajax({
-        url: api + '/get_payments',
-        data: {
-            time: $('#paymentsReport_rows').children().last().data('time')
-        },
-        dataType: 'json',
-        cache: 'false',
-        success: function(data){
-            renderPayments(data);
-        }
+    if (paymentsController) paymentsController.abort();
+    
+    const url = new URL(api + '/get_payments', window.location.origin);
+    url.searchParams.append('time', $('#paymentsReport_rows').children().last().data('time'));
+    
+    paymentsController = new AbortController();
+    
+    fetch(url, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-cache',
+        signal: paymentsController.signal
+    })
+    .then(response => response.json())
+    .then(data => {
+        renderPayments(data);
+    })
+    .catch(error => {
+        if (error.name === 'AbortError') return;
+        console.error('Error loading payments:', error);
     });
 });
 </script>

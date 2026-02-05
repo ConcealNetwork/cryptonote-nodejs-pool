@@ -6,6 +6,13 @@
  *   pm2 start ecosystem.config.js
  *   pm2 save
  *   pm2 startup
+ * 
+ * Log Rotation Setup (IMPORTANT - prevents disk from filling):
+ *   pm2 install pm2-logrotate
+ *   pm2 set pm2-logrotate:max_size 10M
+ *   pm2 set pm2-logrotate:retain 7
+ *   pm2 set pm2-logrotate:compress true
+ *   pm2 set pm2-logrotate:rotateInterval '0 0 * * *'
  */
 
 module.exports = {

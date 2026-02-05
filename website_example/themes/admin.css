@@ -1,3 +1,46 @@
+/* Conceal Color Variables */
+:root {
+  --conceal-bg: #000000;
+  --conceal-text: #ffffff;
+  --conceal-border: #ffa500;
+  --success-color: #ff8c00;
+  --success-background: #323436;
+  --glow-color: rgba(255, 165, 0, 0.5);
+  --glow-shadow: 0 0 5px var(--glow-color), 0 0 8px var(--glow-color);
+}
+
+/* Alerts - Conceal Theme */
+.alert {
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.alert-success {
+  background: var(--success-background);
+  color: var(--success-color);
+  border: 2px solid var(--success-color);
+  border-left: 4px solid var(--success-color);
+  box-shadow: var(--glow-shadow);
+}
+
+.alert-danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--conceal-text);
+  border: 2px solid #ef4444;
+  border-left: 4px solid #ef4444;
+}
+
+.alert-info {
+  background: rgba(255, 165, 0, 0.1);
+  color: var(--conceal-text);
+  border: 2px solid var(--conceal-border);
+  border-left: 4px solid var(--conceal-border);
+}
+
 #page-wrapper {
   padding: 0 15px 0;
   min-height: 568px;
@@ -9,13 +52,14 @@
 }
 
 .nav-side-menu li.sign-out {
-  border-left: 3px solid darkred;  
-  background-color: rgba(255,0,0,.2);
+  border-left: 3px solid var(--conceal-border);  
+  background-color: rgba(255, 165, 0, 0.1);
 }
 
 .nav-side-menu li.sign-out:hover {
-  border-left: 3px solid darkred;
-  background-color: darkred;
+  border-left: 3px solid var(--conceal-border);
+  background-color: rgba(255, 165, 0, 0.2);
+  box-shadow: var(--glow-shadow);
 }
 
 /* Pool Statistics */

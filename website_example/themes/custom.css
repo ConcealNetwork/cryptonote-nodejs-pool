@@ -1,33 +1,47 @@
 /* ============================================
-   MODERN DARK MODE POOL INTERFACE
+   CONCEAL POOL INTERFACE - DARK MODE
    ============================================ */
 
-/* Dark Mode Color Palette */
+/* Conceal Color Palette */
 :root {
-    --primary-color: #3b82f6;
-    --primary-dark: #1e40af;
-    --primary-light: #60a5fa;
-    --accent-color: #22d3ee;
-    --success-color: #10b981;
-    --warning-color: #f59e0b;
+    /* Conceal Brand Colors */
+    --conceal-bg: #000000;
+    --conceal-text: #ffffff;
+    --conceal-border: #ffa500;
+    
+    /* Primary colors (orange theme) */
+    --primary-color: #ffa500;
+    --primary-dark: #cc8400;
+    --primary-light: #ffb733;
+    --accent-color: #ffa500;
+    --success-color: #ff8c00;
+    --success-background: #323436;
+    --warning-color: #ffa500;
     --danger-color: #ef4444;
     
     /* Dark backgrounds */
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --bg-tertiary: #334155;
-    --card-bg: #1e293b;
+    --bg-primary: #000000;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #2a2a2a;
+    --bg-fourth: #808080;
+    --card-bg: #1a1a1a;
     
     /* Text colors */
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #94a3b8;
+    --text-primary: #ffffff;
+    --text-secondary: #e0e0e0;
+    --text-muted: #b0b0b0;
     
-    --border-color: #334155;
-    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+    /* Border and glow */
+    --border-color: #ffa500;
+    --glow-color: rgba(255, 165, 0, 0.5);
+    --glow-strong: rgba(255, 165, 0, 0.8);
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.8);
+    --glow-shadow: 0 0 5px var(--glow-color), 0 0 8px var(--glow-color);
 }
 
 /* ============================================
@@ -35,9 +49,9 @@
    ============================================ */
 
 body {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    background: var(--conceal-bg);
     background-attachment: fixed;
-    color: var(--text-primary);
+    color: var(--conceal-text);
     font-size: 14px;
 }
 
@@ -77,14 +91,15 @@ a:hover {
    ============================================ */
 
 .nav-side-menu {
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.95) 100%);
+    background: var(--bg-primary);
     backdrop-filter: blur(10px);
     box-shadow: var(--shadow-xl);
+    border-right: 2px solid var(--conceal-border);
 }
 
 .nav-side-menu .brand {
-    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
-    color: white;
+    background: var(--conceal-border);
+    color: var(--conceal-bg);
     font-weight: 600;
     letter-spacing: 0.5px;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
@@ -94,8 +109,13 @@ a:hover {
     color: var(--text-secondary);
 }
 
+.nav-side-menu li:hover {
+    border-left-color: var(--conceal-border);
+    box-shadow: var(--glow-shadow);
+}
+
 .nav-side-menu li:hover a {
-    color: white;
+    color: var(--conceal-text);
 }
 
 /* ============================================
@@ -103,10 +123,10 @@ a:hover {
    ============================================ */
 
 #top-bar {
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    background: var(--bg-secondary);
     box-shadow: var(--shadow-md);
-    border-bottom: 1px solid var(--border-color);
-    color: var(--text-primary);
+    border-bottom: 2px solid var(--conceal-border);
+    color: var(--conceal-text);
 }
 
 #top-bar #section {
@@ -133,16 +153,17 @@ a:hover {
     background: var(--card-bg);
     border-radius: 10px;
     box-shadow: var(--shadow-md);
-    border: 1px solid var(--border-color);
+    border: 2px solid var(--conceal-border);
     transition: all 0.3s ease;
     margin-top: 60px;
     margin-bottom: 20px;
     padding: 16px;
-    color: var(--text-primary);
+    color: var(--conceal-text);
 }
 
 .card:hover {
-    border-color: var(--primary-color);
+    border-color: var(--conceal-border);
+    box-shadow: var(--glow-shadow);
 }
 
 /* Stats inside cards - high contrast white text */
@@ -167,37 +188,35 @@ a:hover {
    ============================================ */
 
 .infoBox {
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    background: var(--bg-secondary);
     border-radius: 10px;
     padding: 16px;
     box-shadow: var(--shadow-md);
-    border: 1px solid var(--border-color);
-    border-left: 3px solid var(--primary-color);
+    border: 2px solid var(--conceal-border);
+    border-left: 4px solid var(--conceal-border);
     transition: all 0.3s ease;
     margin-top: 45px;
     margin-bottom: 15px;
 }
 
 .infoBox:hover {
-    border-left-color: var(--primary-light);
+    border-color: var(--conceal-border);
+    box-shadow: var(--glow-shadow);
 }
 
 .infoBox .icon {
     width: 48px;
     height: 48px;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+    background: var(--conceal-border);
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 12px;
-    box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 14px 0 var(--glow-color);
     transition: all 0.3s ease;
 }
 
-.infoBox:hover .icon {
-    /* No transform on hover */
-}
 
 .infoBox .icon span {
     font-size: 22px;
@@ -279,8 +298,9 @@ a:hover {
 
 .btn-primary:hover,
 .btn-default:hover {
-    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%);
-    color: white;
+    background: var(--conceal-border);
+    color: var(--conceal-bg);
+    box-shadow: var(--glow-shadow);
 }
 
 .btn-success {
@@ -316,10 +336,10 @@ a:hover {
 }
 
 .form-control:focus {
-    border-color: var(--primary-light);
+    border-color: var(--conceal-border);
     background: var(--bg-tertiary);
-    color: var(--text-primary);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    color: var(--conceal-text);
+    box-shadow: 0 0 0 3px var(--glow-color), var(--glow-shadow);
     outline: none;
 }
 
@@ -341,21 +361,25 @@ a:hover {
 }
 
 .alert-success {
-    background: rgba(16, 185, 129, 0.2);
-    color: #6ee7b7;
-    border-left: 3px solid var(--success-color);
+    background: var(--success-background);
+    color: var(--success-color);
+    border: 2px solid var(--success-color);
+    border-left: 4px solid var(--success-color);
+    box-shadow: var(--glow-shadow);
 }
 
 .alert-danger {
     background: rgba(239, 68, 68, 0.2);
-    color: #fca5a5;
-    border-left: 3px solid var(--danger-color);
+    color: var(--conceal-text);
+    border: 2px solid var(--danger-color);
+    border-left: 4px solid var(--danger-color);
 }
 
 .alert-info {
-    background: rgba(59, 130, 246, 0.2);
-    color: #93c5fd;
-    border-left: 3px solid var(--primary-color);
+    background: var(--bg-fourth);
+    color: var(--conceal-text);
+    border: 2px solid var(--conceal-border);
+    border-left: 4px solid var(--conceal-border);
 }
 
 /* ============================================
@@ -372,15 +396,15 @@ a:hover {
 }
 
 .table thead th {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    color: #f1f5f9;
+    background: var(--bg-primary);
+    color: var(--conceal-text);
     font-weight: 600;
     text-transform: uppercase;
     font-size: 12px;
     letter-spacing: 0.8px;
     padding: 14px 16px;
     border: none;
-    border-bottom: 2px solid var(--primary-color);
+    border-bottom: 3px solid var(--conceal-border);
 }
 
 .table tbody tr {
@@ -389,7 +413,8 @@ a:hover {
 }
 
 .table tbody tr:hover {
-    background: rgba(59, 130, 246, 0.05);
+    background: rgba(255, 165, 0, 0.1);
+    box-shadow: inset 0 0 10px var(--glow-color);
 }
 
 .table tbody td {
@@ -430,9 +455,10 @@ code {
    ============================================ */
 
 footer {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.3);
-    color: var(--text-secondary);
+    background: var(--bg-primary);
+    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.5);
+    border-top: 2px solid var(--conceal-border);
+    color: var(--conceal-text);
 }
 
 footer a {
@@ -457,12 +483,13 @@ footer a:hover {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    background: var(--conceal-border);
     border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, var(--primary-light) 0%, var(--primary-color) 100%);
+    background: var(--primary-light);
+    box-shadow: 0 0 10px var(--glow-color);
 }
 
 /* ============================================
@@ -480,7 +507,8 @@ footer a:hover {
 
 #statsUpdated i {
     animation: statsUpdate 2s ease-in-out infinite;
-    color: var(--accent-color);
+    color: var(--conceal-border);
+    text-shadow: 0 0 10px var(--glow-color);
 }
 
 /* ============================================
@@ -489,13 +517,13 @@ footer a:hover {
 
 /* Selection */
 ::selection {
-    background: var(--primary-color);
-    color: white;
+    background: var(--conceal-border);
+    color: var(--conceal-bg);
 }
 
 ::-moz-selection {
-    background: var(--primary-color);
-    color: white;
+    background: var(--conceal-border);
+    color: var(--conceal-bg);
 }
 
 /* Progress bars */
@@ -507,8 +535,9 @@ footer a:hover {
 }
 
 .progress-bar {
-    background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-light) 100%);
+    background: var(--conceal-border);
     border-radius: 10px;
+    box-shadow: 0 0 10px var(--glow-color);
 }
 
 /* List groups */
@@ -525,7 +554,8 @@ footer a:hover {
 
 .list-group-item:hover {
     background: var(--bg-tertiary);
-    border-color: var(--primary-color);
+    border-color: var(--conceal-border);
+    box-shadow: var(--glow-shadow);
 }
 
 /* Tabs */
@@ -542,14 +572,16 @@ footer a:hover {
 .nav-tabs > li.active > a,
 .nav-tabs > li.active > a:hover,
 .nav-tabs > li.active > a:focus {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-    color: white;
+    background: var(--conceal-border);
+    color: var(--conceal-bg);
     border: none;
+    box-shadow: var(--glow-shadow);
 }
 
 .nav-tabs > li > a:hover {
-    background: rgba(59, 130, 246, 0.1);
-    border-color: var(--primary-color);
+    background: var(--bg-fourth);
+    border-color: var(--conceal-border);
+    box-shadow: 0 0 5px var(--glow-color);
 }
 
 /* Panel */
@@ -561,10 +593,11 @@ footer a:hover {
 }
 
 .panel-heading {
-    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
-    color: white;
+    background: var(--conceal-border);
+    color: var(--conceal-bg);
     border-radius: 10px 10px 0 0;
     font-size: 14px;
+    box-shadow: 0 0 10px var(--glow-color);
 }
 
 .panel-body {
@@ -620,8 +653,9 @@ a:focus,
 input:focus,
 select:focus,
 textarea:focus {
-    outline: 2px solid var(--primary-light);
+    outline: 2px solid var(--conceal-border);
     outline-offset: 2px;
+    box-shadow: 0 0 5px var(--glow-color);
 }
 
 @media (prefers-reduced-motion: reduce) {

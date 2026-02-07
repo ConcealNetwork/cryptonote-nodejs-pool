@@ -16,13 +16,14 @@ High performance Node.js (with native C addons) mining pool for CryptoNote based
   * [Downloading & Installing](#1-downloading--installing)
   * [Configuration](#2-configuration)
   * [Starting the Pool](#3-start-the-pool)
-  * [Solo Mining Bridge](#solo-mining-bridge)
   * [Host the front-end](#4-host-the-front-end)
   * [Customizing your website](#5-customize-your-website)
   * [SSL](#ssl)
   * [Upgrading](#upgrading)
+* [Redis Setup](#redis-setup)  
 * [JSON-RPC Commands from CLI](#json-rpc-commands-from-cli)
 * [Monitoring Your Pool](#monitoring-your-pool)
+* [Solo Mining Bridge](#solo-mining-bridge)
 * [Donations](#donations)
 * [Credits](#credits)
 * [License](#license)
@@ -721,6 +722,147 @@ the Node.js modules, and any config files that may have been changed.
 * Run `npm install` to reinstall all dependencies. The postinstall script will automatically patch `bigint-buffer` with a secure implementation.
 * Compare your `config.json` to the latest example ones in this repo or the ones in the setup instructions where each config field is explained. You may need to modify or add any new changes.
 
+### Redis Setup
+
+Redis is critical for storing miner shares, balances, and pool statistics. Proper setup ensures data safety.
+
+#### 1. Install and Run Redis
+
+```bash
+# Ubuntu/Debian
+sudo apt-get install redis-server
+
+# Start and enable Redis
+sudo systemctl start redis-server
+sudo systemctl enable redis-server
+
+# Verify it's running
+redis-cli ping
+# Should return: PONG
+```
+
+#### 2. Set Proper Ownership & Access Rights
+
+```bash
+# Ensure Redis data directory has correct permissions
+sudo chown -R redis:redis /var/lib/redis/
+sudo chmod 755 /var/lib/redis/
+
+# Verify
+ls -la /var/lib/redis/
+```
+
+#### 3. Configure Redis for Data Persistence
+
+Edit `/etc/redis/redis.conf` to enable both RDB snapshots and AOF logging:
+
+```bash
+sudo nano /etc/redis/redis.conf
+
+# Add or modify these lines:
+# RDB Persistence (periodic snapshots)
+save 900 1          # Save after 900 sec if 1 key changed
+save 300 10         # Save after 300 sec if 10 keys changed
+save 60 10000       # Save after 60 sec if 10000 keys changed
+
+# AOF Persistence (every write logged - recommended for mining pools)
+appendonly yes
+appendfsync everysec
+
+# Data directory
+dir /var/lib/redis/
+
+# Restart Redis to apply changes
+sudo systemctl restart redis-server
+```
+
+**Verify persistence is enabled:**
+
+```bash
+redis-cli INFO persistence | grep -E "aof_enabled|rdb_last_bgsave_status"
+# Should show: aof_enabled:1 and rdb_last_bgsave_status:ok
+```
+
+#### 4. Automated Backups
+
+**Setup daily backups:**
+
+```bash
+# Make the backup script executable
+chmod +x scripts/backup-redis-pool.sh
+
+# Test the backup
+./scripts/backup-redis-pool.sh
+
+# Schedule daily backups at 3 AM
+crontab -e
+# Add this line:
+0 3 * * * /home/YOUR_USER/cryptonote-nodejs-pool/scripts/backup-redis-pool.sh
+```
+
+Backups are stored in `~/backups/redis-pool/` and kept for 7 days.
+
+**Restore from backup:**
+
+```bash
+# Stop Redis
+sudo systemctl stop redis-server
+
+# Restore files
+sudo cp ~/backups/redis-pool/dump_YYYYMMDD_HHMMSS.rdb /var/lib/redis/dump.rdb
+sudo cp ~/backups/redis-pool/appendonly_YYYYMMDD_HHMMSS.aof /var/lib/redis/appendonly.aof
+
+# Fix permissions
+sudo chown redis:redis /var/lib/redis/*
+
+# Start Redis
+sudo systemctl start redis-server
+
+# Verify data is restored
+redis-cli DBSIZE
+```
+
+#### 5. Health Check Commands
+
+```bash
+# Check Redis status
+redis-cli ping
+
+# View persistence status
+redis-cli INFO persistence
+
+# Check database size
+redis-cli DBSIZE
+
+# View pool keys
+redis-cli KEYS "conceal:*"
+
+# Check miner data (replace with your address)
+redis-cli HGETALL conceal:workers:YOUR_WALLET_ADDRESS
+
+# Monitor Redis in real-time
+redis-cli --stat
+
+# Check disk space
+df -h /var/lib/redis/
+
+# View last save time
+redis-cli LASTSAVE | xargs -I {} date -d @{}
+```
+
+**Monitor pool-specific data:**
+
+```bash
+# Current round shares
+redis-cli HGETALL conceal:shares_actual:roundCurrent
+
+# Blocks found
+redis-cli ZRANGE conceal:blocks:candidates 0 -1
+
+# Pending payments
+redis-cli HGETALL conceal:balances
+```
+
 ### JSON-RPC Commands from CLI
 
 Documentation for JSON-RPC commands can be found here:
@@ -743,7 +885,7 @@ curl 127.0.0.1:18081/json_rpc -d '{"method":"getblockheaderbyheight","params":{"
 
 ---
 
-#### Solo Mining Bridge
+### Solo Mining Bridge
 
 The pool software includes a **solo mining bridge** mode that allows you to mine directly to your local daemon without running a full pool. This is perfect for home miners who want to solo mine with their GPU using miners like srbminer or xmr-stak.
 

@@ -223,7 +223,10 @@ function fetchLiveStats() {
         }
     })
     .finally(() => {
-        fetchLiveStats();
+        // Use updateInterval from config, fallback to 3 seconds
+        const interval = (lastStats && lastStats.config && lastStats.config.updateInterval) ? 
+            lastStats.config.updateInterval * 1000 : 3000;
+        setTimeout(() => fetchLiveStats(), interval);
     });
 }
 

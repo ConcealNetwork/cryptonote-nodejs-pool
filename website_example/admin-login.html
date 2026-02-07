@@ -3,6 +3,9 @@
 <head lang="en">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, private">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <title>Admin Login - Mining Pool</title>
     <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
@@ -131,25 +134,25 @@
             $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Logging in...');
             $message.html('');
             
-            fetch(api + '/admin_login?password=' + encodeURIComponent(password), {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
+            fetch(api + '/admin_login', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({ password: password }),
                 cache: 'no-cache'
             })
             .then(response => response.json())
             .then(data => {
-                if (data.token) {
-                    // Store JWT in cookie - MUST be 'jwtToken' to match server expectation
-                    const expiryDate = new Date();
-                        expiryDate.setTime(expiryDate.getTime() + (data.expiresIn * 1000));
-                        document.cookie = 'jwtToken=' + data.token + '; path=/; expires=' + expiryDate.toUTCString() + '; SameSite=Lax';
-                        
-                        $message.html('<div class="alert alert-success"><i class="fa fa-check"></i> Login successful! Redirecting...</div>');
-                        
-                        // Redirect to admin panel
-                        setTimeout(function() {
-                            window.location.href = '/admin.html';
-                        }, 500);
+                if (data.success) {
+                    // Token is in HttpOnly cookie automatically - no need to store in JavaScript
+                    $message.html('<div class="alert alert-success"><i class="fa fa-check"></i> Login successful! Redirecting...</div>');
+                    
+                    // Redirect to admin panel
+                    setTimeout(function() {
+                        window.location.href = '/admin.html';
+                    }, 500);
                 } else {
                     $btn.prop('disabled', false).html('<i class="fa fa-sign-in"></i> Login');
                     let errorMsg = data.error || 'Login failed. Please try again.';

@@ -3,6 +3,9 @@
 <head lang="en">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, private">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
     <title>Mining Pool Admin Panel</title>
@@ -45,6 +48,10 @@
                     <i class="fa fa-gears"></i> Tools
                 </a></li>
 
+                <li><a class="hot_link" data-page="admin/walletopt.html" href="#walletopt">
+                    <i class="fa fa-money"></i> Wallet Opt
+                </a></li>
+
                 <li class="sign-out"><a href="#" id="returnToPoolBtn">
                     <i class="fa fa-home"></i> Return to Pool
                 </a></li>
@@ -76,42 +83,19 @@
 <script>
 // Check JWT authentication on page load
 $(function() {
-    // Get JWT from cookie
-    var jwt = getCookie('jwtToken');
-    
-    if (!jwt) {
-        // No JWT, redirect to login
-        window.location.href = '/admin-login.html';
-        return;
-    }
-    
-    // JWT exists, proceed with loading
+    // Cookie is HttpOnly - can't read with JS (secure!)
+    // Browser will send it automatically
+    // Just proceed and let API return 401 if not authenticated
     initializeAdmin();
 });
-
-// Get cookie helper
-function getCookie(name) {
-    var value = "; " + document.cookie;
-    var parts = value.split("; " + name + "=");
-    if (parts.length == 2) return parts.pop().split(";").shift();
-    return null;
-}
-
-// Setup AJAX to include JWT only for admin endpoints
+// Setup AJAX error handler for auth failures
 $.ajaxSetup({
-    beforeSend: function(xhr, settings) {
-        // Only add Authorization header for admin endpoints
-        if (settings.url && settings.url.indexOf('/admin_') > -1) {
-            var jwt = getCookie('jwtToken');
-            if (jwt) {
-                xhr.setRequestHeader('Authorization', 'Bearer ' + jwt);
-            }
-        }
+    xhrFields: {
+        withCredentials: true  // Always send cookies
     },
     error: function(xhr, settings) {
-        // If 401 on admin endpoint, JWT expired - redirect to login
+        // If 401 on admin endpoint, not authenticated - redirect to login
         if (xhr.status === 401 && settings.url && settings.url.indexOf('/admin_') > -1) {
-            document.cookie = 'jwtToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
             window.location.href = '/admin-login.html';
         }
     }
@@ -145,6 +129,7 @@ function fetchLiveStats() {
     })
     .then(response => response.json())
     .then(data => {
+        lastStats = data; // Store for config access
         if(currentPage.update) {
             currentPage.update();
         }
@@ -153,7 +138,10 @@ function fetchLiveStats() {
         console.error('Error fetching live stats:', error);
     })
     .finally(() => {
-        fetchLiveStats();
+        // Use updateInterval from config, fallback to 3 seconds
+        const interval = (lastStats && lastStats.config && lastStats.config.updateInterval) ? 
+            lastStats.config.updateInterval * 1000 : 3000;
+        setTimeout(() => fetchLiveStats(), interval);
     });
 }
 

@@ -109,6 +109,7 @@
     "port": 8117,
     "blocks": 30,
     "payments": 30,
+    "jwtSecret": "GENERATE_JWT_SECRET_WITH: node scripts/generate-jwt-secret.js",
     "password": "GENERATE_SECURE_HASH_WITH: node scripts/generate-secure-password.js",
     "ssl": false,
     "sslPort": 8119,

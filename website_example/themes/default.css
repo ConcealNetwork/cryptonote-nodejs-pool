@@ -948,18 +948,18 @@ table th.sort:hover{
   background-color:rgba(255, 255, 255, .3);
 }
 #blocksReport .unlocked td{
-  background-color:rgba(0, 255, 0, .1);
+  background-color:rgba(50, 52, 54, .1);
 }
 #blocksReport .orphaned td{
   background-color:rgba(255, 0, 0, .1);
 }
 #blocksReport .luckGood,
 #blocksReport .unlocked .col7 {
-  color: #17a600;
+  color: #a5ff00;
 }
 #blocksReport .luckBad,
 #blocksReport .orphaned .col7 {
-  color: #a60000;
+  color: #ff5000;
 }
 #blocksReport .luckMid {
   color: #df9d00;

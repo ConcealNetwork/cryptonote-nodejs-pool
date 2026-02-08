@@ -160,13 +160,30 @@ $(function(){
     $("head").append("<link rel='stylesheet' href=themes/admin.css>");
 });
 
-// Return to pool handler (clears JWT)
+// Return to pool handler (IMPERATIVE: clears JWT token)
 $('#returnToPoolBtn').on('click', function(e) {
     e.preventDefault();
-    // Delete JWT cookie
-    document.cookie = 'jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    // Redirect to pool
-    window.location.href = '/';
+    
+    // Call server logout endpoint to clear HttpOnly cookie
+    fetch(api + '/admin_logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        cache: 'no-cache'
+    })
+    .then(() => {
+        // Also clear any client-side cookies as backup
+        document.cookie = 'jwtToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict';
+        document.cookie = 'jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict';
+        // Redirect to pool homepage
+        window.location.href = '/';
+    })
+    .catch(() => {
+        // Even if logout fails, clear cookies and redirect
+        document.cookie = 'jwtToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict';
+        document.cookie = 'jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict';
+        window.location.href = '/';
+    });
 });
 </script>
 

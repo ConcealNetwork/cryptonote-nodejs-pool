@@ -446,3 +446,31 @@ function renderLangSelector() {
         });
     }	
 }
+
+/**
+ * Message Helpers
+ **/
+
+// Show error message
+function showError(sectionId, message) {
+    $(`#${sectionId}_message`).text(message);
+    $(`#${sectionId}_message`).removeClass().addClass('alert alert-danger');
+}
+
+// Show success message
+function showSuccess(sectionId, message) {
+    $(`#${sectionId}_message`).text(message);
+    $(`#${sectionId}_message`).removeClass().addClass('alert alert-success');
+}
+
+// Show info message
+function showInfo(sectionId, message) {
+    $(`#${sectionId}_message`).text(message);
+    $(`#${sectionId}_message`).removeClass().addClass('alert alert-info');
+}
+
+// Clear message
+function clearMessage(sectionId) {
+    $(`#${sectionId}_message`).text('');
+    $(`#${sectionId}_message`).removeClass();
+}

@@ -713,6 +713,28 @@ By adding this you will need to update your `api` variable in the `website_examp
 
 You no longer need to include the port in the variable because of the proxy connection.
 
+#### Wallet Commands from admin Page
+
+The admin panel provides two pages for wallet management:
+
+#### Wallet OPS
+
+The **Wallet OPS** page provides direct access to wallet JSON-RPC commands:
+
+* **Get Status** - Retrieves the current wallet status including block count, balance, and synchronization state  
+* **Save** - Forces the wallet to save its state to disk  
+* **Get Transactions** - Retrieves transaction history for specified addresses  
+
+
+#### Wallet Optimization
+
+The **Wallet Opt** page provides wallet optimization features:
+
+* **Wallet Balance** - View the pool wallet's available balance
+* **Estimate Fusion** - Estimate how many outputs can be fused at a given threshold
+* **Send Fusion Transaction** - Execute a fusion transaction to combine small outputs into larger ones
+
+Fusion transactions help optimize wallet performance by combining multiple small outputs into fewer, larger outputs. This reduces transaction size and fees for future payments.
 
 #### Upgrading
 When updating to the latest code its important to not only `git pull` the latest from this repo, but to also update

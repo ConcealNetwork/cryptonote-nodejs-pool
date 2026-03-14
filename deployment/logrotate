@@ -8,7 +8,7 @@
 #
 
 
-/home/ccxbeelink/cryptonote-nodejs-pool/logs/*.log {
+/home/user/cryptonote-nodejs-pool/logs/*.log {
     daily
     rotate 7
     missingok
@@ -16,8 +16,8 @@
     compress
     delaycompress
     maxsize 100M
-    su ccxbeelink ccxbeelink
-    create 0644 ccxbeelink ccxbeelink
+    su user user
+    create 0644 user user
     dateext
     dateformat -%Y%m%d
     nomail

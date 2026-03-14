@@ -5,3 +5,7 @@ build/
 .idea/
 logs/
 website/
+
+config-solo.json
+config-solo-testnet.json
+ecosystem.config.js

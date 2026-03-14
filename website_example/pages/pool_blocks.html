@@ -84,7 +84,7 @@ $('#blocksChart').hide();
 // Update current page
 currentPage = {
     destroy: function(){
-        if (xhrGetBlocks) xhrGetBlocks.abort();
+        if (blocksController) blocksController.abort();
     },
     update: function(){
         updateText('blocksTotal', lastStats.pool.totalBlocks.toString());
@@ -296,19 +296,28 @@ function renderBlocks(blocksResults){
 }
 
 // Load more blocks button
-var xhrGetBlocks;
+var blocksController;
 $('#loadMoreBlocks').click(function(){
-    if (xhrGetBlocks) xhrGetBlocks.abort();
-    xhrGetBlocks = $.ajax({
-        url: api + '/get_blocks',
-        data: {
-            height: $('#blocksReport_rows').children().last().data('height')
-        },
-        dataType: 'json',
-        cache: 'false',
-        success: function(data){
-            renderBlocks(data);
-        }
+    if (blocksController) blocksController.abort();
+    
+    const url = new URL(api + '/get_blocks', window.location.origin);
+    url.searchParams.append('height', $('#blocksReport_rows').children().last().data('height'));
+    
+    blocksController = new AbortController();
+    
+    fetch(url, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-cache',
+        signal: blocksController.signal
+    })
+    .then(response => response.json())
+    .then(data => {
+        renderBlocks(data);
+    })
+    .catch(error => {
+        if (error.name === 'AbortError') return;
+        console.error('Error loading blocks:', error);
     });
 });
 </script>

@@ -1,0 +1,80 @@
+/**
+ * PM2 Ecosystem Configuration Template
+ * Copy this to ecosystem.config.js and customize for your environment
+ * 
+ * Usage:
+ *   pm2 start ecosystem.config.js
+ *   pm2 save
+ *   pm2 startup
+ * 
+ * Log Rotation Setup (IMPORTANT - prevents disk from filling):
+ *   pm2 install pm2-logrotate
+ *   pm2 set pm2-logrotate:max_size 10M
+ *   pm2 set pm2-logrotate:retain 7
+ *   pm2 set pm2-logrotate:compress true
+ *   pm2 set pm2-logrotate:rotateInterval '0 0 * * *'
+ */
+
+module.exports = {
+  apps: [
+    {
+      name: 'cryptonote-pool',
+      script: 'init.js',
+      cwd: __dirname,
+      
+      // Instance settings
+      instances: 1,
+      exec_mode: 'fork',
+      
+      // Restart strategy
+      autorestart: true,
+      watch: false,
+      max_restarts: 10,
+      min_uptime: '10s',
+      restart_delay: 4000,
+      
+      // Memory management
+      max_memory_restart: '500M',  // Restart if RSS exceeds 500MB (currently using ~31MB)
+      
+      // Logging
+      error_file: 'logs/pm2_error.log',
+      out_file: 'logs/pm2_out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      merge_logs: true,
+      
+      // Environment variables
+      env: {
+        NODE_ENV: 'production',
+        NODE_OPTIONS: '--max-old-space-size=2048'  // 2GB heap limit
+      },
+      
+      // Development environment
+      env_development: {
+        NODE_ENV: 'development',
+        NODE_OPTIONS: '--max-old-space-size=2048'
+      },
+      
+      // Advanced options
+      kill_timeout: 5000,
+      listen_timeout: 10000,
+      shutdown_with_message: false,
+      
+      // Graceful shutdown
+      wait_ready: false,
+      autorestart: true,
+      
+      // Source map support (for better error traces)
+      source_map_support: false,
+      
+      // Process management
+      vizion: false,
+      post_update: [],
+      
+      // cron restart (optional - restart daily at 4 AM)
+      // cron_restart: '0 4 * * *',
+      
+      // Time zone
+      time: true
+    }
+  ]
+};

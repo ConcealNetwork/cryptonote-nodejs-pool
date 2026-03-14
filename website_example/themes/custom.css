@@ -1,1 +1,669 @@
-/* Insert your pool's unique CSS here */
+/* ============================================
+   CONCEAL POOL INTERFACE - DARK MODE
+   ============================================ */
+
+/* Conceal Color Palette */
+:root {
+    /* Conceal Brand Colors */
+    --conceal-bg: #000000;
+    --conceal-text: #ffffff;
+    --conceal-border: #ffa500;
+    
+    /* Primary colors (orange theme) */
+    --primary-color: #ffa500;
+    --primary-dark: #cc8400;
+    --primary-light: #ffb733;
+    --accent-color: #ffa500;
+    --success-color: #ff8c00;
+    --success-background: #323436;
+    --warning-color: #ffa500;
+    --danger-color: #ef4444;
+    
+    /* Dark backgrounds */
+    --bg-primary: #000000;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #2a2a2a;
+    --bg-fourth: #808080;
+    --card-bg: #1a1a1a;
+    
+    /* Text colors */
+    --text-primary: #ffffff;
+    --text-secondary: #e0e0e0;
+    --text-muted: #b0b0b0;
+    
+    /* Border and glow */
+    --border-color: #ffa500;
+    --glow-color: rgba(255, 165, 0, 0.5);
+    --glow-strong: rgba(255, 165, 0, 0.8);
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.8);
+    --glow-shadow: 0 0 5px var(--glow-color), 0 0 8px var(--glow-color);
+}
+
+/* ============================================
+   GLOBAL DARK STYLES
+   ============================================ */
+
+body {
+    background: var(--conceal-bg);
+    background-attachment: fixed;
+    color: var(--conceal-text);
+    font-size: 14px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+h3 {
+    font-size: 24px;
+    margin-bottom: 16px;
+}
+
+h3::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-light) 100%);
+    border-radius: 2px;
+}
+
+a {
+    color: var(--primary-light);
+    transition: all 0.2s ease;
+}
+
+a:hover {
+    color: var(--accent-color);
+    text-decoration: none;
+}
+
+/* ============================================
+   SIDEBAR - Enhanced Dark
+   ============================================ */
+
+.nav-side-menu {
+    background: var(--bg-primary);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-xl);
+    border-right: 2px solid var(--conceal-border);
+}
+
+.nav-side-menu .brand {
+    background: var(--conceal-border);
+    color: var(--conceal-bg);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.nav-side-menu li a {
+    color: var(--text-secondary);
+}
+
+.nav-side-menu li:hover {
+    border-left-color: var(--conceal-border);
+    box-shadow: var(--glow-shadow);
+}
+
+.nav-side-menu li:hover a {
+    color: var(--conceal-text);
+}
+
+/* ============================================
+   TOP BAR - Fix White on White Issue
+   ============================================ */
+
+#top-bar {
+    background: var(--bg-secondary);
+    box-shadow: var(--shadow-md);
+    border-bottom: 2px solid var(--conceal-border);
+    color: var(--conceal-text);
+}
+
+#top-bar #section {
+    padding: 12px 20px;
+    color: var(--text-primary);
+    font-size: 16px;
+}
+
+#top-bar #section strong {
+    color: var(--primary-light);
+    font-weight: 700;
+    font-size: 18px;
+}
+
+#top-bar #section:hover {
+    background: rgba(59, 130, 246, 0.05);
+}
+
+/* ============================================
+   CARDS - Dark Mode with Smaller Text
+   ============================================ */
+
+.card {
+    background: var(--card-bg);
+    border-radius: 10px;
+    box-shadow: var(--shadow-md);
+    border: 2px solid var(--conceal-border);
+    transition: all 0.3s ease;
+    margin-top: 60px;
+    margin-bottom: 20px;
+    padding: 16px;
+    color: var(--conceal-text);
+}
+
+.card:hover {
+    border-color: var(--conceal-border);
+    box-shadow: var(--glow-shadow);
+}
+
+/* Stats inside cards - high contrast white text */
+.card .stats,
+.card .stats div,
+.stats > div:not(#addressError) {
+    color: #fafafa !important;
+    line-height: 1.8;
+    font-size: 14px;
+}
+
+.card .stats i {
+    color: var(--primary-light);
+    margin-right: 8px;
+    width: 20px;
+    display: inline-block;
+    text-align: center;
+}
+
+/* ============================================
+   INFO BOXES - Dark Mode with Smaller Text
+   ============================================ */
+
+.infoBox {
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: var(--shadow-md);
+    border: 2px solid var(--conceal-border);
+    border-left: 4px solid var(--conceal-border);
+    transition: all 0.3s ease;
+    margin-top: 45px;
+    margin-bottom: 15px;
+}
+
+.infoBox:hover {
+    border-color: var(--conceal-border);
+    box-shadow: var(--glow-shadow);
+}
+
+.infoBox .icon {
+    width: 48px;
+    height: 48px;
+    background: var(--conceal-border);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 14px 0 var(--glow-color);
+    transition: all 0.3s ease;
+}
+
+
+.infoBox .icon span {
+    font-size: 22px;
+    color: white;
+}
+
+.infoBox .content .text {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.infoBox .content .value {
+    font-size: 18px;
+    color: var(--text-primary);
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.infoBox .content .smallText {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+/* Color variants for info boxes */
+.infoBox:nth-child(4n+2) {
+    border-left-color: var(--success-color);
+}
+
+.infoBox:nth-child(4n+2) .icon {
+    background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+}
+
+.infoBox:nth-child(4n+3) {
+    border-left-color: var(--warning-color);
+}
+
+.infoBox:nth-child(4n+3) .icon {
+    background: linear-gradient(135deg, var(--warning-color) 0%, #d97706 100%);
+}
+
+.infoBox:nth-child(4n+4) {
+    border-left-color: var(--accent-color);
+}
+
+.infoBox:nth-child(4n+4) .icon {
+    background: linear-gradient(135deg, var(--accent-color) 0%, #0891b2 100%);
+}
+
+/* ============================================
+   BUTTONS - Dark Mode
+   ============================================ */
+
+.btn {
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-weight: 500;
+    font-size: 13px;
+    letter-spacing: 0.3px;
+    transition: all 0.2s ease;
+    border: none;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary,
+.btn-default {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+}
+
+.btn-primary:hover,
+.btn-default:hover {
+    background: var(--conceal-border);
+    color: var(--conceal-bg);
+    box-shadow: var(--glow-shadow);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+    color: white;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #34d399 0%, var(--success-color) 100%);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--danger-color) 0%, #dc2626 100%);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #f87171 0%, var(--danger-color) 100%);
+}
+
+/* ============================================
+   FORMS - Dark Mode with Better Contrast
+   ============================================ */
+
+.form-control {
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+    padding: 10px 14px;
+    font-size: 13px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+}
+
+.form-control:focus {
+    border-color: var(--conceal-border);
+    background: var(--bg-tertiary);
+    color: var(--conceal-text);
+    box-shadow: 0 0 0 3px var(--glow-color), var(--glow-shadow);
+    outline: none;
+}
+
+.form-control::placeholder {
+    color: var(--text-muted);
+}
+
+/* ============================================
+   ALERTS - Dark Mode
+   ============================================ */
+
+.alert {
+    border-radius: 8px;
+    border: none;
+    box-shadow: var(--shadow-sm);
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+}
+
+.alert-success {
+    background: var(--success-background);
+    color: var(--success-color);
+    border: 2px solid var(--success-color);
+    border-left: 4px solid var(--success-color);
+    box-shadow: var(--glow-shadow);
+}
+
+.alert-danger {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--conceal-text);
+    border: 2px solid var(--danger-color);
+    border-left: 4px solid var(--danger-color);
+}
+
+.alert-info {
+    background: var(--bg-fourth);
+    color: var(--conceal-text);
+    border: 2px solid var(--conceal-border);
+    border-left: 4px solid var(--conceal-border);
+}
+
+/* ============================================
+   TABLES - Dark Mode with Smaller Text
+   ============================================ */
+
+.table {
+    background: var(--card-bg);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    color: var(--text-primary);
+    font-size: 13px;
+}
+
+.table thead th {
+    background: var(--bg-primary);
+    color: var(--conceal-text);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.8px;
+    padding: 14px 16px;
+    border: none;
+    border-bottom: 3px solid var(--conceal-border);
+}
+
+.table tbody tr {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table tbody tr:hover {
+    background: rgba(255, 165, 0, 0.1);
+    box-shadow: inset 0 0 10px var(--glow-color);
+}
+
+.table tbody td {
+    padding: 12px 16px;
+    vertical-align: middle;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) {
+    background-color: rgba(51, 65, 85, 0.3);
+}
+
+/* ============================================
+   CODE BLOCKS - Dark Mode
+   ============================================ */
+
+code {
+    background: var(--bg-tertiary);
+    color: var(--accent-color);
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-family: 'Inconsolata', 'Courier New', monospace;
+    font-size: 13px;
+    border: 1px solid var(--border-color);
+}
+
+/* ============================================
+   PAGE WRAPPER
+   ============================================ */
+
+#page-wrapper {
+    background: transparent;
+}
+
+/* ============================================
+   FOOTER - Dark Mode
+   ============================================ */
+
+footer {
+    background: var(--bg-primary);
+    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.5);
+    border-top: 2px solid var(--conceal-border);
+    color: var(--conceal-text);
+}
+
+footer a {
+    color: var(--accent-color);
+}
+
+footer a:hover {
+    color: var(--primary-light);
+}
+
+/* ============================================
+   SCROLLBAR - Dark Mode
+   ============================================ */
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--conceal-border);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-light);
+    box-shadow: 0 0 10px var(--glow-color);
+}
+
+/* ============================================
+   STATS UPDATE INDICATOR
+   ============================================ */
+
+@keyframes statsUpdate {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+#statsUpdated i {
+    animation: statsUpdate 2s ease-in-out infinite;
+    color: var(--conceal-border);
+    text-shadow: 0 0 10px var(--glow-color);
+}
+
+/* ============================================
+   MISC IMPROVEMENTS
+   ============================================ */
+
+/* Selection */
+::selection {
+    background: var(--conceal-border);
+    color: var(--conceal-bg);
+}
+
+::-moz-selection {
+    background: var(--conceal-border);
+    color: var(--conceal-bg);
+}
+
+/* Progress bars */
+.progress {
+    height: 6px;
+    border-radius: 10px;
+    background: var(--bg-tertiary);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.progress-bar {
+    background: var(--conceal-border);
+    border-radius: 10px;
+    box-shadow: 0 0 10px var(--glow-color);
+}
+
+/* List groups */
+.list-group-item {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    font-size: 13px;
+    padding: 10px 14px;
+}
+
+.list-group-item:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--conceal-border);
+    box-shadow: var(--glow-shadow);
+}
+
+/* Tabs */
+.nav-tabs {
+    border-bottom: 2px solid var(--border-color);
+}
+
+.nav-tabs > li > a {
+    color: var(--text-secondary);
+    border-radius: 6px 6px 0 0;
+    font-size: 13px;
+}
+
+.nav-tabs > li.active > a,
+.nav-tabs > li.active > a:hover,
+.nav-tabs > li.active > a:focus {
+    background: var(--conceal-border);
+    color: var(--conceal-bg);
+    border: none;
+    box-shadow: var(--glow-shadow);
+}
+
+.nav-tabs > li > a:hover {
+    background: var(--bg-fourth);
+    border-color: var(--conceal-border);
+    box-shadow: 0 0 5px var(--glow-color);
+}
+
+/* Panel */
+.panel {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    box-shadow: var(--shadow-md);
+}
+
+.panel-heading {
+    background: var(--conceal-border);
+    color: var(--conceal-bg);
+    border-radius: 10px 10px 0 0;
+    font-size: 14px;
+    box-shadow: 0 0 10px var(--glow-color);
+}
+
+.panel-body {
+    color: var(--text-primary);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 991px) {
+    .infoBox {
+        margin-bottom: 12px;
+    }
+    
+    .infoBox .icon {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .infoBox .icon span {
+        font-size: 18px;
+    }
+    
+    .infoBox .content .value {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 575px) {
+    #top-bar {
+        flex-wrap: wrap;
+    }
+    
+    #top-bar #section {
+        flex: 1 1 45%;
+        text-align: center;
+        font-size: 11px;
+        padding: 8px;
+    }
+    
+    body {
+        font-size: 13px;
+    }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+button:focus,
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+    outline: 2px solid var(--conceal-border);
+    outline-offset: 2px;
+    box-shadow: 0 0 5px var(--glow-color);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

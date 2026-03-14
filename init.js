@@ -9,6 +9,7 @@
 var fs = require('fs');
 var cluster = require('cluster');
 var os = require('os');
+var v8 = require('v8');
 
 // Load configuration
 require('./lib/configReader.js');
@@ -20,7 +21,37 @@ require('./lib/logger.js');
 var redis = require('redis');
 
 var redisDB = (config.redis.db && config.redis.db > 0) ? config.redis.db : 0;
-global.redisClient = redis.createClient(config.redis.port, config.redis.host, { db: redisDB, auth_pass: config.redis.auth });
+// Redis client uses modern API format
+var redisOptions = {
+    socket: {
+        host: config.redis.host,
+        port: config.redis.port
+    },
+    database: redisDB
+};
+if (config.redis.auth) {
+    redisOptions.password = config.redis.auth;
+}
+
+global.redisClient = redis.createClient(redisOptions);
+
+// Connect to Redis and handle errors
+global.redisClient.on('error', function(err) {
+    if (typeof log === 'function') {
+        log('error', 'redis', 'Redis client error: %s', [err]);
+    } else {
+        console.error('Redis client error:', err);
+    }
+});
+
+// Connect asynchronously - explicit connection required
+global.redisClient.connect().catch(function(err) {
+    if (typeof log === 'function') {
+        log('error', 'redis', 'Failed to connect to Redis: %s', [err]);
+    } else {
+        console.error('Failed to connect to Redis:', err);
+    }
+});
 
 // Load pool modules
 if (cluster.isWorker){
@@ -53,6 +84,77 @@ require('./lib/exceptionWriter.js')(logSystem);
 
 // Pool informations
 log('info', logSystem, 'Starting Cryptonote Node.JS pool version %s', [version]);
+
+/**
+ * CPU Usage Tracking
+ **/
+var lastCpuMeasure = null;
+
+function getCpuUsage() {
+    const cpus = os.cpus();
+    let user = 0, nice = 0, sys = 0, idle = 0, irq = 0;
+
+    for (let cpu of cpus) {
+        user += cpu.times.user;
+        nice += cpu.times.nice;
+        sys += cpu.times.sys;
+        idle += cpu.times.idle;
+        irq += cpu.times.irq;
+    }
+
+    const current = { user, nice, sys, idle, irq };
+    
+    if (!lastCpuMeasure) {
+        lastCpuMeasure = current;
+        return null;
+    }
+
+    const userDiff = current.user - lastCpuMeasure.user;
+    const niceDiff = current.nice - lastCpuMeasure.nice;
+    const sysDiff = current.sys - lastCpuMeasure.sys;
+    const idleDiff = current.idle - lastCpuMeasure.idle;
+    const irqDiff = current.irq - lastCpuMeasure.irq;
+    const total = userDiff + niceDiff + sysDiff + idleDiff + irqDiff;
+
+    lastCpuMeasure = current;
+
+    if (total === 0) return null;
+
+    return {
+        user: ((userDiff / total) * 100).toFixed(2),
+        nice: ((niceDiff / total) * 100).toFixed(2),
+        sys: ((sysDiff / total) * 100).toFixed(2),
+        idle: ((idleDiff / total) * 100).toFixed(2),
+        irq: ((irqDiff / total) * 100).toFixed(2),
+        used: (((total - idleDiff) / total) * 100).toFixed(2)
+    };
+}
+
+function logSystemStats() {
+    // CPU Usage
+    const cpuUsage = getCpuUsage();
+    if (cpuUsage) {
+        log('info', logSystem, 'CPU Usage: %s%% used | user: %s%%, sys: %s%%, nice: %s%%, irq: %s%%, idle: %s%%', 
+            [cpuUsage.used, cpuUsage.user, cpuUsage.sys, cpuUsage.nice, cpuUsage.irq, cpuUsage.idle]);
+    }
+
+    // Memory Usage
+    const heapStats = v8.getHeapStatistics();
+    const totalHeapMB = (heapStats.total_heap_size / 1024 / 1024).toFixed(2);
+    const usedHeapMB = (heapStats.used_heap_size / 1024 / 1024).toFixed(2);
+    const heapLimitMB = (heapStats.heap_size_limit / 1024 / 1024).toFixed(2);
+    const heapUsagePercent = ((heapStats.used_heap_size / heapStats.total_heap_size) * 100).toFixed(2);
+    
+    const memUsage = process.memoryUsage();
+    const rssMB = (memUsage.rss / 1024 / 1024).toFixed(2);
+    const externalMB = (memUsage.external / 1024 / 1024).toFixed(2);
+
+    log('info', logSystem, 'Memory: RSS %s MB | Heap: %s MB / %s MB (%s%%) | Limit: %s MB | External: %s MB', 
+        [rssMB, usedHeapMB, totalHeapMB, heapUsagePercent, heapLimitMB, externalMB]);
+}
+
+// Start system monitoring (every 10 seconds)
+setInterval(logSystemStats, 10000);
  
 // Run a single module ?
 var singleModule = (function(){
@@ -114,34 +216,45 @@ var singleModule = (function(){
  * Check redis database version
  **/
 function checkRedisVersion(callback){
-    redisClient.info(function(error, response){
-        if (error){
-            log('error', logSystem, 'Redis version check failed');
-            return;
-        }
-        var parts = response.split('\r\n');
-        var version;
-        var versionString;
-        for (var i = 0; i < parts.length; i++){
-            if (parts[i].indexOf(':') !== -1){
-                var valParts = parts[i].split(':');
-                if (valParts[0] === 'redis_version'){
-                    versionString = valParts[1];
-                    version = parseFloat(versionString);
-                    break;
+    // Requires connection first, then we can use callbacks
+    function doCheck() {
+        // info() returns a promise, convert to callback
+        global.redisClient.info().then(function(response){
+            var parts = response.split('\r\n');
+            var version;
+            var versionString;
+            for (var i = 0; i < parts.length; i++){
+                if (parts[i].indexOf(':') !== -1){
+                    var valParts = parts[i].split(':');
+                    if (valParts[0] === 'redis_version'){
+                        versionString = valParts[1];
+                        version = parseFloat(versionString);
+                        break;
+                    }
                 }
             }
-        }
-        if (!version){
-            log('error', logSystem, 'Could not detect redis version - must be super old or broken');
-            return;
-        }
-        else if (version < 2.6){
-            log('error', logSystem, "You're using redis version %s the minimum required version is 2.6. Follow the damn usage instructions...", [versionString]);
-            return;
-        }
-        callback();
-    });
+            if (!version){
+                log('error', logSystem, 'Could not detect redis version - must be super old or broken');
+                return;
+            }
+            else if (version < 2.6){
+                log('error', logSystem, "You're using redis version %s the minimum required version is 2.6. Follow the damn usage instructions...", [versionString]);
+                return;
+            }
+            callback();
+        }).catch(function(error){
+            log('error', logSystem, 'Redis version check failed: %s', [error]);
+        });
+    }
+    
+    // Ensure client is connected
+    if (global.redisClient.isOpen) {
+        doCheck();
+    } else {
+        global.redisClient.connect().then(doCheck).catch(function(err) {
+            log('error', logSystem, 'Failed to connect to Redis for version check: %s', [err]);
+        });
+    }
 }
 
 /**

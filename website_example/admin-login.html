@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, private">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <title>Admin Login - Mining Pool</title>
+    <link href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-7tY7Dc2Q8WQTKGz2Fa0vC4dWQo07N4mJjKvHfIGnxuC4vPqFGFQppd9b3NWpf18/" crossorigin="anonymous">
+    <link href="https://netdna.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .login-container {
+            background: #2d3748;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .login-header h2 {
+            color: #f1f5f9;
+            margin: 0 0 10px 0;
+            font-weight: 600;
+        }
+        .login-header p {
+            color: #a0aec0;
+            margin: 0;
+        }
+        .form-group label {
+            color: #f1f5f9;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        .form-control {
+            background: #1a202c;
+            border: 1px solid #4a5568;
+            color: #f1f5f9;
+            height: 45px;
+            font-size: 16px;
+        }
+        .form-control:focus {
+            background: #1a202c;
+            border-color: #3b82f6;
+            color: #f1f5f9;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .btn-login {
+            width: 100%;
+            height: 45px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            border-radius: 6px;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+        .btn-login:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .alert {
+            margin-top: 20px;
+            border-radius: 6px;
+        }
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .back-link a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+        .back-link a:hover {
+            color: #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h2><i class="fa fa-lock"></i> Admin Login</h2>
+            <p>Enter your password to access the admin panel</p>
+        </div>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" class="form-control" id="password" placeholder="Enter admin password" required autofocus>
+            </div>
+            
+            <button type="submit" class="btn btn-login" id="loginBtn">
+                <i class="fa fa-sign-in"></i> Login
+            </button>
+        </form>
+        
+        <div id="message"></div>
+        
+        <div class="back-link">
+            <a href="/"><i class="fa fa-arrow-left"></i> Back to Pool</a>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha384-rY/jv8mMhqDabXSo+UCggqKtdmBfd3qC2/KvyTDNQ6PcUJXaxK1tMepoQda4g5vB" crossorigin="anonymous"></script>
+    <script src="config.js"></script>
+    <script>
+        $('#loginForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const password = $('#password').val();
+            const $btn = $('#loginBtn');
+            const $message = $('#message');
+            
+            $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Logging in...');
+            $message.html('');
+            
+            fetch(api + '/admin_login', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({ password: password }),
+                cache: 'no-cache'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Token is in HttpOnly cookie automatically - no need to store in JavaScript
+                    $message.html('<div class="alert alert-success"><i class="fa fa-check"></i> Login successful! Redirecting...</div>');
+                    
+                    // Redirect to admin panel
+                    setTimeout(function() {
+                        window.location.href = '/admin.html';
+                    }, 500);
+                } else {
+                    $btn.prop('disabled', false).html('<i class="fa fa-sign-in"></i> Login');
+                    let errorMsg = data.error || 'Login failed. Please try again.';
+                    $message.html('<div class="alert alert-danger"><i class="fa fa-times"></i> ' + errorMsg + '</div>');
+                    $('#password').val('').focus();
+                }
+            })
+            .catch(error => {
+                $btn.prop('disabled', false).html('<i class="fa fa-sign-in"></i> Login');
+                $message.html('<div class="alert alert-danger"><i class="fa fa-times"></i> Connection error. Please try again.</div>');
+                $('#password').val('').focus();
+                console.error('Login error:', error);
+            });
+        });
+    </script>
+</body>
+</html>

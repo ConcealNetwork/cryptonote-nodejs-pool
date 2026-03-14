@@ -44,19 +44,23 @@ function getMinerCells(position, data){
 function updateTop10() {
     $("#top10miners_rows").empty();
 
-    var xhrGetTOP = $.ajax({
-        url: api + '/get_top10miners',
-        data: {
-            time: $('#top10_rows').children().last().data('time')
-        },
-        dataType: 'json',
-        cache: 'false',
-        success: function(data){
-            if (!data) return;
-            for (var i=0; i<data.length; ++i) {
-                $( "#top10miners_rows" ).append('<tr>' + getMinerCells(i+1, data[i]) + '</tr>');
-            }
+    const url = new URL(api + '/get_top10miners', window.location.origin);
+    url.searchParams.append('time', $('#top10_rows').children().last().data('time'));
+    
+    fetch(url, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-cache'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data) return;
+        for (var i=0; i<data.length; ++i) {
+            $( "#top10miners_rows" ).append('<tr>' + getMinerCells(i+1, data[i]) + '</tr>');
         }
+    })
+    .catch(error => {
+        console.error('Error loading top 10 miners:', error);
     });
 }
 

@@ -1,12 +1,12 @@
-<h3>Current Ports Usage (<span id="totalUsers">0</span> users)</h3>
+<h3>Current Ports Usage (<span id="totalMiners">0</span> miners / <span id="totalWorkers">0</span> workers)</h3>
 
 <!-- Handlebars template -->
 <script id="portsListTable" type="text/x-handlebars-template">
     {{#each ports}}
     <tr>
-        <td class="col1" data-sort="{{this.port.port}}">{{this.port}}</td>
-        <td class="col2" data-sort="{{this.port.users}}">{{this.users}}</td>
-        <td class="col3">&nbsp;</td>
+        <td class="col1" data-sort="{{this.port}}">{{this.port}}</td>
+        <td class="col2" data-sort="{{this.miners}}">{{this.miners}}</td>
+        <td class="col3" data-sort="{{this.workers}}">{{this.workers}}</td>
     </tr>
     {{/each}}
 </script>
@@ -18,8 +18,8 @@
             <thead>
             <tr>
                 <th class="col1">Port</th>
-                <th class="col2">Connected Users</th>
-                <th class="col3">&nbsp;</th>
+                <th class="col2">Connected Miners</th>
+                <th class="col3">Connected Workers</th>
             </tr>
             </thead>
             <tbody id="template">
@@ -31,51 +31,62 @@
 <!-- Javascript -->
 <script>
 function parsePorts(ports) {
-    var totalUsers = 0;
+    var totalMiners = 0;
+    var totalWorkers = 0;
     var portsArray = [];
     var properObject = {};
+    
     for (var port in ports) {
         if (ports.hasOwnProperty(port)) {
             var portsData = ports[port];
-	    var usersCount = portsData.users ?parseInt(portsData.users) : 0;
-	    if (usersCount > 0) {
-                portsArray.push({
-                    port: portsData.port,
-                    users: usersCount
-                });
-                totalUsers += usersCount;
-	    }
+            var minersCount = parseInt(portsData.miners) || 0;
+            var workersCount = parseInt(portsData.workers) || 0;
+            
+            portsArray.push({
+                port: portsData.port,
+                miners: minersCount,
+                workers: workersCount
+            });
+            
+            totalMiners += minersCount;
+            totalWorkers += workersCount;
         }
     }
-    $('#totalUsers').html(totalUsers);
+    
+    $('#totalMiners').html(totalMiners);
+    $('#totalWorkers').html(totalWorkers);
 
     properObject['ports'] = portsArray.sort(function(a, b) {
-        return a.port.port - b.port.port
+        return parseInt(a.port) - parseInt(b.port);
     }).reverse();
 
     return properObject;
 }
 
-function createPortsTable(promptPassword) {
-    var password = docCookies.getItem('password');
-
-    if(!password || promptPassword) {
-        password = prompt('Enter admin password');
-    }
-
-    $.ajax({
-        url: api + '/admin_ports',
-        data: {password: password},
-        cache: false,
-        dataType: 'json',
-        success: function(data) {
-            docCookies.setItem('password', password, Infinity);
-            renderTemplate(parsePorts(data), '#portsListTable', '#template');
-        },
-        error: function(e) {
-            docCookies.removeItem('password');
+async function createPortsTable() {
+    try {
+        const response = await fetch(api + '/admin_ports', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            cache: 'no-cache'
+        });
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                // JWT expired, will be handled by global error handler
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-    });
+        
+        const data = await response.json();
+        renderTemplate(parsePorts(data), '#portsListTable', '#template');
+    } catch (error) {
+        console.error('Error loading ports data:', error);
+    }
 }
 $(function() {
     $('[data-toggle="tooltip"]').tooltip();

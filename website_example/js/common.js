@@ -61,14 +61,15 @@ window.onhashchange = function(){
 };
 
 // Route to page
-var xhrPageLoading;
+var pageLoadController;
 function routePage(loadedCallback) {
     if (currentPage) currentPage.destroy();
     $('#page').html('');
     $('#loading').show();
 
-    if (xhrPageLoading) {
-        xhrPageLoading.abort();
+    // Cancel previous page load if still in progress
+    if (pageLoadController) {
+        pageLoadController.abort();
     }
 
     $('.hot_link').parent().removeClass('active');
@@ -79,17 +80,30 @@ function routePage(loadedCallback) {
     
     loadTranslations();
 
-    xhrPageLoading = $.ajax({
-        url: 'pages/' + page,
-        cache: false,
-        success: function (data) {
-            $('#menu-content').collapse('hide');
-            $('#loading').hide();
-            $('#page').show().html(data);
-	    loadTranslations();
-            if (currentPage) currentPage.update();
-            if (loadedCallback) loadedCallback();
+    // Create new AbortController for this request
+    pageLoadController = new AbortController();
+    
+    fetch('pages/' + page, {
+        method: 'GET',
+        cache: 'no-cache',
+        signal: pageLoadController.signal
+    })
+    .then(response => response.text())
+    .then(data => {
+        $('#menu-content').collapse('hide');
+        $('#loading').hide();
+        $('#page').show().html(data);
+        loadTranslations();
+        if (currentPage) currentPage.update();
+        if (loadedCallback) loadedCallback();
+    })
+    .catch(error => {
+        if (error.name === 'AbortError') {
+            // Request was cancelled, this is expected
+            return;
         }
+        console.error('Error loading page:', error);
+        $('#loading').hide();
     });
 }
 
@@ -100,6 +114,14 @@ function routePage(loadedCallback) {
 // Add .update() custom jQuery function to update text content
 $.fn.update = function(txt){
     var el = this[0];
+    if (!el) {
+        // Element not found - log warning for debugging (only in development)
+        if (console && console.warn) {
+            var selector = this.selector || (this.length === 0 ? 'no matching elements' : 'unknown');
+            console.warn('update: element not found for selector', selector, 'value:', txt);
+        }
+        return this;
+    }
     if (el.textContent !== txt)
         el.textContent = txt;
     return this;
@@ -215,15 +237,17 @@ function getReadableHashRateString(hashrate){
 // Get coin decimal places
 function getCoinDecimalPlaces() {
     if (typeof coinDecimalPlaces != "undefined") return coinDecimalPlaces;
-    else if (lastStats.config.coinDecimalPlaces) return lastStats.config.coinDecimalPlaces;
-    else lastStats.config.coinUnits.toString().length - 1;
+    else if (lastStats && lastStats.config && lastStats.config.coinDecimalPlaces) return lastStats.config.coinDecimalPlaces;
+    else if (lastStats && lastStats.config && lastStats.config.coinUnits) return lastStats.config.coinUnits.toString().length - 1;
+    else return 6; // Default for Conceal
 }
 
 // Get readable coins
 function getReadableCoins(coins, digits, withoutSymbol){
     var coinDecimalPlaces = getCoinDecimalPlaces();
+    if (!lastStats || !lastStats.config) return '0';
     var amount = parseFloat((parseInt(coins || 0) / lastStats.config.coinUnits).toFixed(digits || coinDecimalPlaces));
-    return amount.toString() + (withoutSymbol ? '' : (' ' + lastStats.config.symbol));
+    return amount.toString() + (withoutSymbol ? '' : (' ' + (lastStats.config.symbol || 'CCX')));
 }
 
 // Format payment link
@@ -260,18 +284,20 @@ function formatLuck(difficulty, shares) {
 // Return pool host
 function getPoolHost() {
     if (typeof poolHost != "undefined") return poolHost;
-    if (lastStats.config.poolHost) return lastStats.config.poolHost;
+    if (lastStats && lastStats.config && lastStats.config.poolHost) return lastStats.config.poolHost;
     else return window.location.hostname;
 }
 
 // Return transaction URL
 function getTransactionUrl(id) {
-    return transactionExplorer.replace(new RegExp('{symbol}', 'g'), lastStats.config.symbol.toLowerCase()).replace(new RegExp('{id}', 'g'), id);
+    if (!lastStats || !lastStats.config) return '#';
+    return transactionExplorer.replace(new RegExp('{symbol}', 'g'), (lastStats.config.symbol || 'CCX').toLowerCase()).replace(new RegExp('{id}', 'g'), id);
 }
 
 // Return blockchain explorer URL
 function getBlockchainUrl(id) {
-    return blockchainExplorer.replace(new RegExp('{symbol}', 'g'), lastStats.config.symbol.toLowerCase()).replace(new RegExp('{id}', 'g'), id);    
+    if (!lastStats || !lastStats.config) return '#';
+    return blockchainExplorer.replace(new RegExp('{symbol}', 'g'), (lastStats.config.symbol || 'CCX').toLowerCase()).replace(new RegExp('{id}', 'g'), id);    
 }
  
 /**
@@ -419,4 +445,32 @@ function renderLangSelector() {
             });
         });
     }	
+}
+
+/**
+ * Message Helpers
+ **/
+
+// Show error message
+window.showError = function(sectionId, message) {
+    $(`#${sectionId}_message`).text(message);
+    $(`#${sectionId}_message`).removeClass().addClass('alert alert-danger');
+}
+
+// Show success message
+window.showSuccess = function(sectionId, message) {
+    $(`#${sectionId}_message`).text(message);
+    $(`#${sectionId}_message`).removeClass().addClass('alert alert-success');
+}
+
+// Show info message
+window.showInfo = function(sectionId, message) {
+    $(`#${sectionId}_message`).text(message);
+    $(`#${sectionId}_message`).removeClass().addClass('alert alert-info');
+}
+
+// Clear message
+window.clearMessage = function(sectionId) {
+    $(`#${sectionId}_message`).text('');
+    $(`#${sectionId}_message`).removeClass();
 }

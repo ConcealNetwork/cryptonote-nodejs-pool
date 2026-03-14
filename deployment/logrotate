@@ -1,7 +1,25 @@
-/path/to/pool/logs/*.log {
+# Logrotate config for cryptonote-nodejs-pool
+#
+# Update path and user:group below to match your setup
+# 
+# Install: sudo cp logrotate /etc/logrotate.d/cryptonote-pool
+# Test:    sudo logrotate -d /etc/logrotate.d/cryptonote-pool
+# Run:     sudo logrotate -f /etc/logrotate.d/cryptonote-pool
+#
+
+
+/home/user/cryptonote-nodejs-pool/logs/*.log {
     daily
     rotate 7
     missingok
+    notifempty
     compress
-    create
+    delaycompress
+    maxsize 100M
+    su user user
+    create 0644 user user
+    dateext
+    dateformat -%Y%m%d
+    nomail
+    sharedscripts
 }

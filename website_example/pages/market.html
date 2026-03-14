@@ -96,7 +96,7 @@ $(function() {
  **/
  
 var marketPrices = {};
-var xhrMarketGets;
+var marketController;
 
 // Load initial market data
 var loadedData = false;
@@ -121,37 +121,50 @@ function updateMarkets(){
         marketCurrencies[i] = marketCurrencies[i].replace('{symbol}', lastStats.config.symbol).toUpperCase();
     }
 
-    xhrMarketGets = $.ajax({
-        url: api + '/get_market',
-        data: { tickers: marketCurrencies },
-        dataType: 'json',
-        cache: 'false',
-        success: function(data) {
-            if (!data || data.length === 0) {
-                $('#marketInfos').hide();
-                return;
-            }
-
-            $('#marketInfos').empty();
-            for (var i in data) {
-                if (!data[i] || !data[i].ticker) continue;
-                var ticker = data[i].ticker;
-                var tickerParts = ticker.split('-');
-                var tickerBase = tickerParts[0] || null;
-                var tickerTarget = tickerParts[1] || null;
-
-                var price  = data[i].price;
-                if (!price || price === 0) continue;
-
-                var dataSource = data[i].source;
-
-                renderMarketPrice(tickerBase, tickerTarget, price, dataSource);
-            }
-            $('#marketInfos').show();
-	},
-        error: function() {
+    // Cancel previous request if still in progress
+    if (marketController) {
+        marketController.abort();
+    }
+    
+    const url = new URL(api + '/get_market', window.location.origin);
+    url.searchParams.append('tickers', marketCurrencies.join(','));
+    
+    marketController = new AbortController();
+    
+    fetch(url, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-cache',
+        signal: marketController.signal
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data || data.length === 0) {
             $('#marketInfos').hide();
+            return;
         }
+
+        $('#marketInfos').empty();
+        for (var i in data) {
+            if (!data[i] || !data[i].ticker) continue;
+            var ticker = data[i].ticker;
+            var tickerParts = ticker.split('-');
+            var tickerBase = tickerParts[0] || null;
+            var tickerTarget = tickerParts[1] || null;
+
+            var price  = data[i].price;
+            if (!price || price === 0) continue;
+
+            var dataSource = data[i].source;
+
+            renderMarketPrice(tickerBase, tickerTarget, price, dataSource);
+        }
+        $('#marketInfos').show();
+    })
+    .catch(error => {
+        if (error.name === 'AbortError') return;
+        $('#marketInfos').hide();
+        console.error('Error loading market data:', error);
     });
 }
 

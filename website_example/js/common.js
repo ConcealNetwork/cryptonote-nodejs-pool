@@ -428,7 +428,9 @@ function renderLangSelector() {
         $('#newLang').each(function(){
             $(this).change(function() {
                 var newLang = $(this).val();
-                var url = '?lang=' + newLang;
+                // Encode the language code to prevent XSS
+                var encodedLang = encodeURIComponent(newLang);
+                var url = '?lang=' + encodedLang;
                 if (window.location.hash) url += window.location.hash;
                 window.location.href = url;
             });
@@ -452,7 +454,9 @@ function renderLangSelector() {
         $('#mNewLang').each(function(){
             $(this).change(function() {
                 var newLang = $(this).val();
-                var url = '?lang=' + newLang;
+                // Encode the language code to prevent XSS
+                var encodedLang = encodeURIComponent(newLang);
+                var url = '?lang=' + encodedLang;
                 if (window.location.hash) url += window.location.hash;
                 window.location.href = url;
             });

@@ -15,9 +15,16 @@ $('#menu-content').collapse('hide');
  * Cookies handler
  **/
 
+// Reusable function to escape all regex special characters for safe use in RegExp
+function escapeRegexSpecialChars(str) {
+    // Escape all regex special characters: [ ] { } ( ) * + ? . \ ^ $ |
+    return String(str).replace(/[\[\]{}()*+?.\\^$|]/g, "\\$&");
+}
+
 var docCookies = {
     getItem: function (sKey) {
-        return decodeURIComponent(document.cookie.replace(new RegExp("(?:(?:^|.*;)\\s*" + encodeURIComponent(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*([^;]*).*$)|^.*$"), "$1")) || null;
+        // Use escapeRegexSpecialChars to properly escape all regex special characters
+        return decodeURIComponent(document.cookie.replace(new RegExp("(?:(?:^|.*;)\\s*" + escapeRegexSpecialChars(encodeURIComponent(sKey)) + "\\s*\\=\\s*([^;]*).*$)|^.*$"), "$1")) || null;
     },
     setItem: function (sKey, sValue, vEnd, sPath, sDomain, bSecure) {
         if (!sKey || /^(?:expires|max\-age|path|domain|secure)$/i.test(sKey)) { return false; }
@@ -44,7 +51,8 @@ var docCookies = {
         return true;
     },
     hasItem: function (sKey) {
-        return (new RegExp("(?:^|;\\s*)" + encodeURIComponent(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=")).test(document.cookie);
+        // Use escapeRegexSpecialChars to properly escape all regex special characters
+        return (new RegExp("(?:^|;\\s*)" + escapeRegexSpecialChars(encodeURIComponent(sKey)) + "\\s*\\=")).test(document.cookie);
     }
 };
 
@@ -73,7 +81,11 @@ function routePage(loadedCallback) {
     }
 
     $('.hot_link').parent().removeClass('active');
-    var $link = $('a.hot_link[href="' + (window.location.hash || '#') + '"]');
+    // Use $.find() instead of $() to prevent XSS - find() only interprets as CSS selector, never as HTML
+    var hash = window.location.hash || '#';
+    // Escape special CSS selector characters to prevent XSS
+    var escapedHash = hash.replace(/[!"#$%&'()*+,.\/:;<=>?@[\\\]^`{|}~]/g, '\\$&');
+    var $link = $(document).find('a.hot_link[href="' + escapedHash + '"]');
     
     $link.parent().addClass('active');
     var page = $link.data('page');
@@ -377,7 +389,8 @@ const args = location.search.substr(1).split(/&/);
 for (var i=0; i<args.length; ++i) {
     const tmp = args[i].split(/=/);
     if (tmp[0] != "") {
-        $_GET[decodeURIComponent(tmp[0])] = decodeURIComponent(tmp.slice(1).join("").replace("+", " "));
+        // Use regex with global flag to replace all occurrences, not just the first
+        $_GET[decodeURIComponent(tmp[0])] = decodeURIComponent(tmp.slice(1).join("").replace(/\+/g, " "));
         var langCode = $_GET['lang'];    
     }
 }
@@ -451,26 +464,38 @@ function renderLangSelector() {
  * Message Helpers
  **/
 
+// Reusable function to safely get element by ID using $(document).find() to prevent XSS
+// find() only interprets as CSS selector, never as HTML, preventing XSS attacks
+function safeFindById(id) {
+    // Escape special CSS selector characters to prevent XSS
+    var escapedId = String(id).replace(/[!"#$%&'()*+,.\/:;<=>?@[\\\]^`{|}~]/g, '\\$&');
+    return $(document).find('#' + escapedId);
+}
+
 // Show error message
 window.showError = function(sectionId, message) {
-    $(`#${sectionId}_message`).text(message);
-    $(`#${sectionId}_message`).removeClass().addClass('alert alert-danger');
+    var $element = safeFindById(sectionId + '_message');
+    $element.text(message);
+    $element.removeClass().addClass('alert alert-danger');
 }
 
 // Show success message
 window.showSuccess = function(sectionId, message) {
-    $(`#${sectionId}_message`).text(message);
-    $(`#${sectionId}_message`).removeClass().addClass('alert alert-success');
+    var $element = safeFindById(sectionId + '_message');
+    $element.text(message);
+    $element.removeClass().addClass('alert alert-success');
 }
 
 // Show info message
 window.showInfo = function(sectionId, message) {
-    $(`#${sectionId}_message`).text(message);
-    $(`#${sectionId}_message`).removeClass().addClass('alert alert-info');
+    var $element = safeFindById(sectionId + '_message');
+    $element.text(message);
+    $element.removeClass().addClass('alert alert-info');
 }
 
 // Clear message
 window.clearMessage = function(sectionId) {
-    $(`#${sectionId}_message`).text('');
-    $(`#${sectionId}_message`).removeClass();
+    var $element = safeFindById(sectionId + '_message');
+    $element.text('');
+    $element.removeClass();
 }

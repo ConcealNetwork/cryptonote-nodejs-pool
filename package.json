@@ -24,7 +24,7 @@
         "bn.js": "^5.2.2",
         "bufferutil": "^4.0.8",
         "cli-color": "^2.0.3",
-        "cryptoforknote-util": "git+https://github.com/MoneroOcean/node-cryptoforknote-util.git",
+        "cryptoforknote-util": "git+https://github.com/Acktarius/node-cryptoforknote-util.git",
         "cryptonight-hashing": "git+https://github.com/Acktarius/cryptonight-hashing.git",
         "dateformat": "^4.6.3",
         "mailgun.js": "^11.1.0",
